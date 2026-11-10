@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Переход в Telegram</title>
+  <meta name="description" content="Закрытый канал по психологии и отношениям">
+  <style>
+    :root {
+      --bg-color: #0b0e14;
+      --card-bg: rgba(22, 27, 34, 0.92);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --tg-blue: #229ed9;
+      --tg-blue-hover: #1e8dc3;
+      --tg-pulse: rgba(34, 158, 217, 0.45);
+      --text-main: #f0f6fc;
+      --text-muted: #8b949e;
+      --text-highlight: #58a6ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 20%, #151d2a 0%, var(--bg-color) 80%);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 24px;
+      padding: 34px 24px 28px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 40px rgba(34, 158, 217, 0.08);
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .avatar-wrap {
+      position: relative;
+      width: 88px;
+      height: 88px;
+      margin: 0 auto 18px;
+    }
+
+    .avatar-glow {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: var(--tg-blue);
+      filter: blur(16px);
+      opacity: 0.55;
+      animation: pulseGlow 2.4s infinite ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(0.95); opacity: 0.4; }
+      50% { transform: scale(1.15); opacity: 0.7; }
+    }
+
+    .avatar-icon {
+      position: relative;
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #28b0f3 0%, #1783b9 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .avatar-icon svg {
+      width: 48px;
+      height: 48px;
+      fill: #ffffff;
+      margin-right: 3px;
+      margin-top: 1px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(88, 166, 255, 0.12);
+      border: 1px solid rgba(88, 166, 255, 0.25);
+      color: var(--text-highlight);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3fb950;
+      box-shadow: 0 0 8px #3fb950;
+      animation: blink 1.6s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    h1 {
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+
+    .desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 26px;
+    }
+
+    .desc strong {
+      color: #e6edf3;
+      font-weight: 600;
+    }
+
+    .cta-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 17px 20px;
+      background: linear-gradient(135deg, #2bb5f8 0%, #1e8cc3 100%);
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      border-radius: 14px;
+      box-shadow: 0 6px 20px var(--tg-pulse);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      animation: pulseBtn 2.2s infinite ease-in-out;
+    }
+
+    @keyframes pulseBtn {
+      0%, 100% { box-shadow: 0 6px 20px rgba(34, 158, 217, 0.4); transform: scale(1); }
+      50% { box-shadow: 0 10px 28px rgba(34, 158, 217, 0.7); transform: scale(1.02); }
+    }
+
+    .cta-btn:active {
+      transform: scale(0.97) !important;
+      background: #1a7ea7;
+    }
+
+    .cta-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: #ffffff;
+    }
+
+    .fallback-note {
+      margin-top: 18px;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .fallback-link {
+      display: inline-block;
+      margin-top: 10px;
+      color: #79c0ff;
+      font-size: 12px;
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    .brand-footer {
+      margin-top: 22px;
+      font-size: 11px;
+      color: #484f58;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper">
+    <div class="card">
+      <div class="avatar-wrap">
+        <div class="avatar-glow"></div>
+        <div class="avatar-icon">
+          <!-- Telegram Plane Icon -->
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="badge">
+        <span class="badge-dot"></span> Приватный доступ
+      </div>
+
+      <h1>Психология и Отношения</h1>
+      <p class="desc">
+        То, чего нет в TikTok: закрытые материалы, скрытые манипуляции и разборы без цензуры.
+      </p>
+
+      <a href="#" id="action-btn" class="cta-btn">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+        Открыть в Telegram
+      </a>
+
+      <div class="fallback-note">
+        Приложение откроется автоматически.<br>
+        Если этого не произошло:
+        <br>
+        <button id="web-fallback-btn" class="fallback-link">Открыть через браузер</button>
+      </div>
+    </div>
+
+    <div class="brand-footer">
+      <span>Прямое защищенное соединение</span>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      // Исходная ссылка из TikTok аккаунта @psihologysoul:
+      // t.me/+IukZVSEw0io4NGEy
+      const INVITE_HASH = "IukZVSEw0io4NGEy";
+      
+      const DEEP_LINK = "tg://join?invite=" + INVITE_HASH;
+      const WEB_LINK = "https://t.me/+" + INVITE_HASH;
+      
+      // Android Intent для бесшовного запуска Telegram
+      const ANDROID_INTENT = "intent://join?invite=" + INVITE_HASH + "#Intent;package=org.telegram.messenger;scheme=tg;end;";
+
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      function openTelegram() {
+        if (isAndroid) {
+          // На Android надежнее всего Intent
+          window.location.href = ANDROID_INTENT;
+        } else {
+          // На iOS прямой переход по схеме при клике
+          window.location.href = DEEP_LINK;
+        }
+
+        // Резервный таймер: если приложение не перехватило за 1.4 сек
+        setTimeout(function() {
+          window.location.href = WEB_LINK;
+        }, 1400);
+      }
+
+      const actionBtn = document.getElementById("action-btn");
+      actionBtn.addEventListener("click", function(e) {
+        e.preventDefault();
+        openTelegram();
+      });
+
+      const fallbackBtn = document.getElementById("web-fallback-btn");
+      fallbackBtn.addEventListener("click", function(e) {
+        e.preventDefault();
+        window.location.href = WEB_LINK;
+      });
+
+      // Попытка мягкого авто-перехода при первичной загрузке страницы
+      window.addEventListener("DOMContentLoaded", function() {
+        setTimeout(function() {
+          // Запускаем попытку редиректа
+          if (isAndroid) {
+            window.location.href = ANDROID_INTENT;
+          } else if (isIOS) {
+            window.location.href = DEEP_LINK;
+          }
+        }, 450);
+      });
+    })();
+  </script>
+</body>
+</html>
