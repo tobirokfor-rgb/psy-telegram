@@ -8,10 +8,9 @@
   <style>
     :root {
       --bg-color: #0b0e14;
-      --card-bg: rgba(22, 27, 34, 0.92);
+      --card-bg: rgba(22, 27, 34, 0.94);
       --card-border: rgba(255, 255, 255, 0.08);
       --tg-blue: #229ed9;
-      --tg-blue-hover: #1e8dc3;
       --tg-pulse: rgba(34, 158, 217, 0.45);
       --text-main: #f0f6fc;
       --text-muted: #8b949e;
@@ -117,13 +116,13 @@
       background: rgba(88, 166, 255, 0.12);
       border: 1px solid rgba(88, 166, 255, 0.25);
       color: var(--text-highlight);
-      padding: 4px 12px;
+      padding: 5px 14px;
       border-radius: 20px;
       font-size: 11px;
       font-weight: 600;
       letter-spacing: 0.4px;
       text-transform: uppercase;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     .badge-dot {
@@ -153,11 +152,6 @@
       color: var(--text-muted);
       line-height: 1.5;
       margin-bottom: 26px;
-    }
-
-    .desc strong {
-      color: #e6edf3;
-      font-weight: 600;
     }
 
     .cta-btn {
@@ -199,21 +193,18 @@
     }
 
     .fallback-note {
-      margin-top: 18px;
+      margin-top: 20px;
       font-size: 12px;
       color: var(--text-muted);
-      line-height: 1.4;
+      line-height: 1.45;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 12px 14px;
     }
 
-    .fallback-link {
-      display: inline-block;
-      margin-top: 10px;
-      color: #79c0ff;
-      font-size: 12px;
-      text-decoration: underline;
-      cursor: pointer;
-      background: none;
-      border: none;
+    .fallback-note b {
+      color: #fff;
     }
 
     .brand-footer {
@@ -255,10 +246,8 @@
       </a>
 
       <div class="fallback-note">
-        Приложение откроется автоматически.<br>
-        Если этого не произошло:
-        <br>
-        <button id="web-fallback-btn" class="fallback-link">Открыть через браузер</button>
+        💬 <b>Не открывается приложение?</b><br>
+        Нажмите <b>••• (три точки)</b> в правом верхнем углу ➔ <b>«Открыть в браузере»</b>.
       </div>
     </div>
 
@@ -269,56 +258,38 @@
 
   <script>
     (function() {
-      // Исходная ссылка из TikTok аккаунта @psihologysoul:
-      // t.me/+IukZVSEw0io4NGEy
       const INVITE_HASH = "IukZVSEw0io4NGEy";
-      
-      const DEEP_LINK = "tg://join?invite=" + INVITE_HASH;
       const WEB_LINK = "https://t.me/+" + INVITE_HASH;
-      
-      // Android Intent для бесшовного запуска Telegram
-      const ANDROID_INTENT = "intent://join?invite=" + INVITE_HASH + "#Intent;package=org.telegram.messenger;scheme=tg;end;";
+      const ANDROID_INTENT = "intent://join?invite=" + INVITE_HASH + "#Intent;package=org.telegram.messenger;scheme=tg;end";
+      const TG_DEEPLINK = "tg://join?invite=" + INVITE_HASH;
 
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const ua = navigator.userAgent || "";
+      const isAndroid = /Android/i.test(ua);
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
 
       function openTelegram() {
         if (isAndroid) {
-          // На Android надежнее всего Intent
+          // На Android вызываем Intent СТРОГО по клику пользователя
           window.location.href = ANDROID_INTENT;
+          setTimeout(function() {
+            window.location.href = WEB_LINK;
+          }, 1200);
+        } else if (isIOS) {
+          // На iOS пробуем диплинк с мягким фоллбеком
+          window.location.href = TG_DEEPLINK;
+          setTimeout(function() {
+            window.location.href = WEB_LINK;
+          }, 1000);
         } else {
-          // На iOS прямой переход по схеме при клике
-          window.location.href = DEEP_LINK;
-        }
-
-        // Резервный таймер: если приложение не перехватило за 1.4 сек
-        setTimeout(function() {
           window.location.href = WEB_LINK;
-        }, 1400);
+        }
       }
 
-      const actionBtn = document.getElementById("action-btn");
-      actionBtn.addEventListener("click", function(e) {
+      // Навешиваем вызов ТОЛЬКО на физический клик пользователя!
+      // Никаких авто-редиректов в onload / DOMContentLoaded — они триггерят ошибку в TikTok!
+      document.getElementById("action-btn").addEventListener("click", function(e) {
         e.preventDefault();
         openTelegram();
-      });
-
-      const fallbackBtn = document.getElementById("web-fallback-btn");
-      fallbackBtn.addEventListener("click", function(e) {
-        e.preventDefault();
-        window.location.href = WEB_LINK;
-      });
-
-      // Попытка мягкого авто-перехода при первичной загрузке страницы
-      window.addEventListener("DOMContentLoaded", function() {
-        setTimeout(function() {
-          // Запускаем попытку редиректа
-          if (isAndroid) {
-            window.location.href = ANDROID_INTENT;
-          } else if (isIOS) {
-            window.location.href = DEEP_LINK;
-          }
-        }, 450);
       });
     })();
   </script>
