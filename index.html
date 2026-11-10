@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Переход в Telegram</title>
-  <meta name="description" content="Закрытый канал по психологии и отношениям">
+  <title>Переход в закрытый канал</title>
+  <meta name="description" content="Психология и Отношения: закрытые материалы, скрытые манипуляции и разборы без цензуры.">
   <style>
     :root {
       --bg-color: #0b0e14;
@@ -12,9 +12,11 @@
       --card-border: rgba(255, 255, 255, 0.08);
       --tg-blue: #229ed9;
       --tg-pulse: rgba(34, 158, 217, 0.45);
+      --success-green: #2ea44f;
       --text-main: #f0f6fc;
       --text-muted: #8b949e;
       --text-highlight: #58a6ff;
+      --accent-yellow: #f1e05a;
     }
 
     * {
@@ -26,7 +28,7 @@
     }
 
     body {
-      background: radial-gradient(circle at 50% 20%, #151d2a 0%, var(--bg-color) 80%);
+      background: radial-gradient(circle at 50% 15%, #151d2a 0%, var(--bg-color) 85%);
       color: var(--text-main);
       display: flex;
       flex-direction: column;
@@ -35,6 +37,53 @@
       min-height: 100vh;
       padding: 20px;
       overflow-x: hidden;
+      position: relative;
+    }
+
+    /* TikTok Browser Top Banner & Arrow */
+    .tiktok-top-banner {
+      display: none;
+      position: fixed;
+      top: 10px;
+      right: 12px;
+      z-index: 1000;
+      background: rgba(30, 38, 50, 0.96);
+      border: 1px solid rgba(88, 166, 255, 0.35);
+      border-radius: 16px;
+      padding: 10px 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(34, 158, 217, 0.25);
+      animation: pulseBanner 2s infinite ease-in-out;
+      max-width: 250px;
+    }
+
+    @keyframes pulseBanner {
+      0%, 100% { transform: translateY(0); box-shadow: 0 10px 30px rgba(0,0,0,0.7), 0 0 15px rgba(34, 158, 217, 0.2); }
+      50% { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(0,0,0,0.8), 0 0 25px rgba(34, 158, 217, 0.45); }
+    }
+
+    .tiktok-top-banner-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      line-height: 1.35;
+      color: #fff;
+    }
+
+    .tiktok-top-banner-content b {
+      color: #58a6ff;
+    }
+
+    .arrow-icon {
+      font-size: 20px;
+      animation: pointUp 1.2s infinite alternate ease-in-out;
+      color: #58a6ff;
+      flex-shrink: 0;
+    }
+
+    @keyframes pointUp {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-5px) rotate(-10deg); }
     }
 
     .wrapper {
@@ -43,6 +92,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      position: relative;
+      z-index: 10;
     }
 
     .card {
@@ -51,7 +102,7 @@
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-radius: 24px;
-      padding: 34px 24px 28px;
+      padding: 32px 22px 26px;
       width: 100%;
       text-align: center;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 40px rgba(34, 158, 217, 0.08);
@@ -65,9 +116,9 @@
 
     .avatar-wrap {
       position: relative;
-      width: 88px;
-      height: 88px;
-      margin: 0 auto 18px;
+      width: 86px;
+      height: 86px;
+      margin: 0 auto 16px;
     }
 
     .avatar-glow {
@@ -90,8 +141,8 @@
 
     .avatar-icon {
       position: relative;
-      width: 88px;
-      height: 88px;
+      width: 86px;
+      height: 86px;
       border-radius: 50%;
       background: linear-gradient(135deg, #28b0f3 0%, #1783b9 100%);
       display: flex;
@@ -102,8 +153,8 @@
     }
 
     .avatar-icon svg {
-      width: 48px;
-      height: 48px;
+      width: 46px;
+      height: 46px;
       fill: #ffffff;
       margin-right: 3px;
       margin-top: 1px;
@@ -122,7 +173,7 @@
       font-weight: 600;
       letter-spacing: 0.4px;
       text-transform: uppercase;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .badge-dot {
@@ -151,7 +202,15 @@
       font-size: 14px;
       color: var(--text-muted);
       line-height: 1.5;
-      margin-bottom: 26px;
+      margin-bottom: 22px;
+    }
+
+    /* Primary and Secondary CTA Buttons */
+    .buttons-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
     }
 
     .cta-btn {
@@ -161,7 +220,7 @@
       justify-content: center;
       gap: 10px;
       width: 100%;
-      padding: 17px 20px;
+      padding: 16px 18px;
       background: linear-gradient(135deg, #2bb5f8 0%, #1e8cc3 100%);
       color: #ffffff;
       text-decoration: none;
@@ -190,35 +249,88 @@
       width: 22px;
       height: 22px;
       fill: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .copy-btn.copied {
+      background: rgba(46, 164, 79, 0.2);
+      border-color: #2ea44f;
+      color: #3fb950;
     }
 
     .fallback-note {
-      margin-top: 20px;
+      margin-top: 18px;
       font-size: 12px;
       color: var(--text-muted);
-      line-height: 1.45;
+      line-height: 1.5;
       background: rgba(255, 255, 255, 0.03);
       border: 1px dashed rgba(255, 255, 255, 0.1);
       border-radius: 12px;
       padding: 12px 14px;
+      text-align: left;
     }
 
     .fallback-note b {
       color: #fff;
     }
 
+    .fallback-note .step-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .step-num {
+      background: rgba(88, 166, 255, 0.2);
+      color: #58a6ff;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
     .fallback-note .hook-sub {
-      margin-top: 8px;
+      margin-top: 10px;
       padding-top: 8px;
       border-top: 1px solid rgba(255, 255, 255, 0.06);
       color: #58a6ff;
       font-weight: 600;
       font-size: 12px;
       letter-spacing: 0.2px;
+      text-align: center;
     }
 
     .brand-footer {
-      margin-top: 22px;
+      margin-top: 20px;
       font-size: 11px;
       color: #484f58;
       display: flex;
@@ -228,6 +340,14 @@
   </style>
 </head>
 <body>
+
+  <!-- Animated TikTok In-App Browser Indicator (shows only inside TikTok) -->
+  <div id="tiktok-banner" class="tiktok-top-banner">
+    <div class="tiktok-top-banner-content">
+      <div>Нажмите <b>•••</b> в углу ➔ <b>«Открыть в браузере»</b></div>
+      <div class="arrow-icon">↗</div>
+    </div>
+  </div>
 
   <div class="wrapper">
     <div class="card">
@@ -250,14 +370,30 @@
         То, чего нет в TikTok: закрытые материалы, скрытые манипуляции и разборы без цензуры.
       </p>
 
-      <a href="#" id="action-btn" class="cta-btn">
-        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
-        Открыть в Telegram
-      </a>
+      <div class="buttons-container">
+        <!-- Main Button: Direct safe transition -->
+        <a href="https://t.me/+IukZVSEw0io4NGEy" id="action-btn" class="cta-btn">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+          <span id="btn-text">Открыть в Telegram</span>
+        </a>
+
+        <!-- Copy Link button (failsafe, works 100% everywhere) -->
+        <button id="copy-btn" class="copy-btn" type="button">
+          <span id="copy-icon">📋</span>
+          <span id="copy-text">Скопировать ссылку на канал</span>
+        </button>
+      </div>
 
       <div class="fallback-note">
-        🔒 <b>Не открывается канал?</b><br>
-        Нажмите <b>••• (три точки)</b> в правом верхнем углу ➔ <b>«Открыть в браузере»</b>.
+        <b>Не открывается канал?</b>
+        <div class="step-row">
+          <div class="step-num">1</div>
+          <div>Нажмите <b>••• (три точки)</b> в правом верхнем углу</div>
+        </div>
+        <div class="step-row">
+          <div class="step-num">2</div>
+          <div>Выберите <b>«Открыть в браузере»</b> (Safari / Chrome)</div>
+        </div>
         <div class="hook-sub">🗝 Ждём тебя в клубе. Все разборы уже ждут внутри.</div>
       </div>
     </div>
@@ -270,38 +406,75 @@
   <script>
     (function() {
       const INVITE_HASH = "IukZVSEw0io4NGEy";
-      const WEB_LINK = "https://t.me/+" + INVITE_HASH;
-      const ANDROID_INTENT = "intent://join?invite=" + INVITE_HASH + "#Intent;package=org.telegram.messenger;scheme=tg;end";
+      const TG_URL = "https://t.me/+" + INVITE_HASH;
       const TG_DEEPLINK = "tg://join?invite=" + INVITE_HASH;
 
       const ua = navigator.userAgent || "";
-      const isAndroid = /Android/i.test(ua);
+      const isTikTok = /musical_ly|trill|BytedanceWebview|TikTok|ByteLocale/i.test(ua);
       const isIOS = /iPhone|iPad|iPod/i.test(ua);
+      const isAndroid = /Android/i.test(ua);
 
-      function openTelegram() {
-        if (isAndroid) {
-          // На Android вызываем Intent СТРОГО по клику пользователя
-          window.location.href = ANDROID_INTENT;
-          setTimeout(function() {
-            window.location.href = WEB_LINK;
-          }, 1200);
-        } else if (isIOS) {
-          // На iOS пробуем диплинк с мягким фоллбеком
-          window.location.href = TG_DEEPLINK;
-          setTimeout(function() {
-            window.location.href = WEB_LINK;
-          }, 1000);
-        } else {
-          window.location.href = WEB_LINK;
-        }
+      const banner = document.getElementById("tiktok-banner");
+      const actionBtn = document.getElementById("action-btn");
+      const copyBtn = document.getElementById("copy-btn");
+      const copyText = document.getElementById("copy-text");
+      const copyIcon = document.getElementById("copy-icon");
+
+      // 1. Если внутри браузера TikTok:
+      if (isTikTok) {
+        // Показываем стрелку на верхнее меню
+        if (banner) banner.style.display = "block";
+
+        // Внутри TikTok НЕЛЬЗЯ вызывать tg:// или intent://,
+        // так как TikTok перехватывает их и выдает: "Выполнить действие не удалось".
+        // Мы отправляем по обычной HTTPS ссылке t.me:
+        actionBtn.addEventListener("click", function(e) {
+          // Не перехватываем e.preventDefault() — даём открыться стандартной ссылке https://t.me/...
+          // Это предотвращает появление ошибки "Выполнить действие не удалось" в TikTok!
+        });
+      } else {
+        // 2. Если открыто в нормальном браузере (Safari / Chrome / внешний):
+        actionBtn.addEventListener("click", function(e) {
+          // В нормальном браузере диплинк tg:// работает идеально без блокировок
+          if (isIOS || isAndroid) {
+            e.preventDefault();
+            window.location.href = TG_DEEPLINK;
+            setTimeout(function() {
+              window.location.href = TG_URL;
+            }, 1200);
+          }
+        });
       }
 
-      // Навешиваем вызов ТОЛЬКО на физический клик пользователя!
-      // Никаких авто-редиректов в onload / DOMContentLoaded — они триггерят ошибку в TikTok!
-      document.getElementById("action-btn").addEventListener("click", function(e) {
-        e.preventDefault();
-        openTelegram();
+      // 3. Копирование ссылки (работает безупречно на любых смартфонах)
+      copyBtn.addEventListener("click", function() {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(TG_URL).then(showCopied).catch(fallbackCopy);
+        } else {
+          fallbackCopy();
+        }
       });
+
+      function showCopied() {
+        copyBtn.classList.add("copied");
+        copyIcon.textContent = "✓";
+        copyText.textContent = "Ссылка скопирована!";
+        setTimeout(function() {
+          copyBtn.classList.remove("copied");
+          copyIcon.textContent = "📋";
+          copyText.textContent = "Скопировать ссылку на канал";
+        }, 3000);
+      }
+
+      function fallbackCopy() {
+        const temp = document.createElement("input");
+        temp.value = TG_URL;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        document.body.removeChild(temp);
+        showCopied();
+      }
     })();
   </script>
 </body>
