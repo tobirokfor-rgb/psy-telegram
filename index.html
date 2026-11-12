@@ -423,6 +423,18 @@
       const copyText = document.getElementById("copy-text");
       const copyIcon = document.getElementById("copy-icon");
 
+      // Фоновый маячок (Beacon) для фиксации кликов в аналитике Cloudflare
+      function trackClick(source) {
+        try {
+          const url = "/track-click.json?src=" + encodeURIComponent(source || "btn") + "&t=" + Date.now();
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon(url);
+          } else {
+            fetch(url, { method: "GET", mode: "no-cors", keepalive: true });
+          }
+        } catch (err) {}
+      }
+
       // 1. Если внутри браузера TikTok:
       if (isTikTok) {
         // Показываем стрелку на верхнее меню
@@ -432,12 +444,14 @@
         // так как TikTok перехватывает их и выдает: "Выполнить действие не удалось".
         // Мы отправляем по обычной HTTPS ссылке t.me:
         actionBtn.addEventListener("click", function(e) {
+          trackClick("tiktok_in_app");
           // Не перехватываем e.preventDefault() — даём открыться стандартной ссылке https://t.me/...
           // Это предотвращает появление ошибки "Выполнить действие не удалось" в TikTok!
         });
       } else {
         // 2. Если открыто в нормальном браузере (Safari / Chrome / внешний):
         actionBtn.addEventListener("click", function(e) {
+          trackClick("external_browser");
           // В нормальном браузере диплинк tg:// работает идеально без блокировок
           if (isIOS || isAndroid) {
             e.preventDefault();
@@ -451,6 +465,7 @@
 
       // 3. Копирование ссылки (работает безупречно на любых смартфонах)
       copyBtn.addEventListener("click", function() {
+        trackClick("copy_link");
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(TG_URL).then(showCopied).catch(fallbackCopy);
         } else {
