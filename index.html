@@ -248,6 +248,13 @@
       background: #1a7ea7;
     }
 
+    .cta-btn.btn-cooldown {
+      opacity: 0.72;
+      pointer-events: none;
+      animation: none !important;
+      cursor: wait;
+    }
+
     .cta-btn svg {
       width: 22px;
       height: 22px;
@@ -424,15 +431,45 @@
       const copyIcon = document.getElementById("copy-icon");
 
       // Фоновый маячок (Beacon) для фиксации кликов в аналитике Cloudflare
-      function trackClick(source) {
+      function trackClick(sourceType) {
         try {
-          const url = "/track-click.json?src=" + encodeURIComponent(source || "btn") + "&t=" + Date.now();
+          // Разделение URL для Cloudflare:
+          // /track-click-tiktok.json — клики внутри TikTok WebView
+          // /track-click.json — реальные переходы во внешнем браузере (Safari/Chrome)
+          const endpoint = (sourceType === "tiktok_in_app") ? "/track-click-tiktok.json" : "/track-click.json";
+          const payload = JSON.stringify({ src: sourceType, ts: Date.now() });
+
           if (navigator.sendBeacon) {
-            navigator.sendBeacon(url);
+            navigator.sendBeacon(endpoint, payload);
           } else {
-            fetch(url, { method: "GET", mode: "no-cors", keepalive: true });
+            fetch(endpoint, { method: "POST", mode: "no-cors", keepalive: true }).catch(function() {});
           }
-        } catch (err) {}
+        } catch (err) {
+          try {
+            const fallbackUrl = (sourceType === "tiktok_in_app") ? "/track-click-tiktok.json" : "/track-click.json";
+            new Image().src = fallbackUrl + "?t=" + Date.now();
+          } catch (e) {}
+        }
+      }
+
+      // Защита от спам-кликов с кулдауном 3 секунды
+      let isCooldown = false;
+      function checkAndApplyCooldown() {
+        const now = Date.now();
+        const lastClick = parseInt(sessionStorage.getItem("last_tg_click") || "0", 10);
+        if (isCooldown || (now - lastClick < 3000)) {
+          return false; // Спам-клик заблокирован
+        }
+        isCooldown = true;
+        sessionStorage.setItem("last_tg_click", now.toString());
+
+        actionBtn.classList.add("btn-cooldown");
+        setTimeout(function() {
+          isCooldown = false;
+          actionBtn.classList.remove("btn-cooldown");
+        }, 3000);
+
+        return true;
       }
 
       // 1. Если внутри браузера TikTok:
@@ -444,6 +481,10 @@
         // так как TikTok перехватывает их и выдает: "Выполнить действие не удалось".
         // Мы отправляем по обычной HTTPS ссылке t.me:
         actionBtn.addEventListener("click", function(e) {
+          if (!checkAndApplyCooldown()) {
+            e.preventDefault();
+            return;
+          }
           trackClick("tiktok_in_app");
           // Не перехватываем e.preventDefault() — даём открыться стандартной ссылке https://t.me/...
           // Это предотвращает появление ошибки "Выполнить действие не удалось" в TikTok!
@@ -451,6 +492,10 @@
       } else {
         // 2. Если открыто в нормальном браузере (Safari / Chrome / внешний):
         actionBtn.addEventListener("click", function(e) {
+          if (!checkAndApplyCooldown()) {
+            e.preventDefault();
+            return;
+          }
           trackClick("external_browser");
           // В нормальном браузере диплинк tg:// работает идеально без блокировок
           if (isIOS || isAndroid) {
@@ -465,6 +510,11 @@
 
       // 3. Копирование ссылки (работает безупречно на любых смартфонах)
       copyBtn.addEventListener("click", function() {
+        const now = Date.now();
+        const lastCopy = parseInt(sessionStorage.getItem("last_copy_click") || "0", 10);
+        if (now - lastCopy < 1500) return;
+        sessionStorage.setItem("last_copy_click", now.toString());
+
         trackClick("copy_link");
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(TG_URL).then(showCopied).catch(fallbackCopy);
