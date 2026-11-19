@@ -409,6 +409,17 @@
       const TG_URL = "https://t.me/+" + INVITE_HASH;
       const TG_DEEPLINK = "tg://join?invite=" + INVITE_HASH;
 
+      const ENDPOINT_TG_APP = "/track-tg-app.json";
+      const ENDPOINT_TG_WEB = "/track-tg-web.json";
+      const ENDPOINT_TIKTOK_CLICK = "/track-click-tiktok.json";
+      const ENDPOINT_COPY = "/track-copy.json";
+
+      const APP_STORAGE_KEY = "tg_app_handoff_ts_v1";
+      const WEB_STORAGE_KEY = "tg_web_handoff_ts_v1";
+      const HANDOFF_TTL_MS = 24 * 60 * 60 * 1000;
+      const AUTO_REDIRECT_DELAY_MS = 100;
+      const FALLBACK_DELAY_MS = 2300;
+
       const ua = navigator.userAgent || "";
       const isTikTok = /musical_ly|trill|BytedanceWebview|TikTok|ByteLocale/i.test(ua);
       const isBot = /bot|crawl|spider|slurp|facebookexternalhit|telegrambot|twitterbot|whatsapp|pinterest|peek|preview/i.test(ua);
@@ -424,22 +435,77 @@
       const copyIcon = document.getElementById("copy-icon");
       const copyText = document.getElementById("copy-text");
 
-      function trackClick(sourceType) {
-        try {
-          const endpoint = (sourceType === "tiktok_in_app") ? "/track-click-tiktok.json" : "/track-click.json";
-          const payload = JSON.stringify({ src: sourceType, ts: Date.now() });
+      let appSentInPage = false;
+      let webSentInPage = false;
 
+      function sendBeaconEvent(endpoint, data) {
+        try {
+          const payload = JSON.stringify(data);
           if (navigator.sendBeacon) {
-            navigator.sendBeacon(endpoint, payload);
-          } else {
-            fetch(endpoint, { method: "POST", mode: "no-cors", keepalive: true }).catch(function() {});
+            const queued = navigator.sendBeacon(endpoint, payload);
+            if (queued) return;
           }
+          fetch(endpoint, {
+            method: "POST",
+            mode: "no-cors",
+            keepalive: true,
+            body: payload
+          }).catch(function() {});
         } catch (err) {
           try {
-            const fallbackUrl = (sourceType === "tiktok_in_app") ? "/track-click-tiktok.json" : "/track-click.json";
-            new Image().src = fallbackUrl + "?t=" + Date.now();
+            new Image().src = endpoint + "?t=" + Date.now();
           } catch (e) {}
         }
+      }
+
+      function isKeyFresh(storageKey) {
+        try {
+          const raw = window.localStorage.getItem(storageKey);
+          if (!raw) return false;
+          const ts = parseInt(raw, 10);
+          return !isNaN(ts) && (Date.now() - ts) < HANDOFF_TTL_MS;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function saveKeyNow(storageKey) {
+        try {
+          window.localStorage.setItem(storageKey, String(Date.now()));
+        } catch (e) {}
+      }
+
+      function hasRecentAppHandoff() {
+        return appSentInPage || isKeyFresh(APP_STORAGE_KEY);
+      }
+
+      function hasRecentAnyHandoff() {
+        return hasRecentAppHandoff() || webSentInPage || isKeyFresh(WEB_STORAGE_KEY);
+      }
+
+      function markHandoffSent(kind) {
+        if (kind === "app") {
+          appSentInPage = true;
+          saveKeyNow(APP_STORAGE_KEY);
+        } else {
+          webSentInPage = true;
+          saveKeyNow(WEB_STORAGE_KEY);
+        }
+      }
+
+      function isRestoredNavigation() {
+        try {
+          if (window.performance && window.performance.getEntriesByType) {
+            const entries = window.performance.getEntriesByType("navigation");
+            if (entries && entries.length > 0 && entries[0].type === "back_forward") {
+              return true;
+            }
+          }
+          if (window.performance && window.performance.navigation && window.performance.navigation.type === 2) {
+            return true;
+          }
+        } catch (e) {}
+        return false;
       }
 
       function legacyExecCopy(text) {
@@ -474,11 +540,11 @@
         }
       }
 
-      let lastTrackTs = 0;
-      function canTrackNow(cooldownMs) {
+      let lastTikTokTrackTs = 0;
+      function canTrackTikTokNow(cooldownMs) {
         const now = Date.now();
-        if (now - lastTrackTs < cooldownMs) return false;
-        lastTrackTs = now;
+        if (now - lastTikTokTrackTs < cooldownMs) return false;
+        lastTikTokTrackTs = now;
         return true;
       }
 
@@ -488,13 +554,70 @@
         btnText.textContent = "✓ Ссылка скопирована";
       }
 
-      function openTelegramFromBrowser() {
+      let handoffActive = false;
+      let activeTrigger = "external_browser";
+      let fallbackTimer = null;
+      let autoStartTimer = null;
+
+      function clearPendingFallback() {
+        if (fallbackTimer !== null) {
+          clearTimeout(fallbackTimer);
+          fallbackTimer = null;
+        }
+      }
+
+      function clearAutoStart() {
+        if (autoStartTimer !== null) {
+          clearTimeout(autoStartTimer);
+          autoStartTimer = null;
+        }
+      }
+
+      function emitHandoffBeacon(kind, endpoint, via) {
+        if (isBot) return;
+        if (kind === "app" ? hasRecentAppHandoff() : hasRecentAnyHandoff()) return;
+        markHandoffSent(kind);
+        sendBeaconEvent(endpoint, {
+          src: activeTrigger || "external_browser",
+          via: via,
+          ts: Date.now()
+        });
+      }
+
+      function confirmNativeAppHandoff(reason) {
+        if (!handoffActive) return;
+        handoffActive = false;
+        clearPendingFallback();
+        emitHandoffBeacon("app", ENDPOINT_TG_APP, reason);
+      }
+
+      function openTelegramFromBrowser(triggerSource) {
+        clearPendingFallback();
+        activeTrigger = triggerSource || "external_browser";
+
         if (isIOS || isAndroid) {
+          // Маячок срабатывает только при фактическом уходе браузера в приложение (visibilitychange -> hidden)
+          // либо ровно перед web-fallback, если tg:// не перехватило приложение за FALLBACK_DELAY_MS.
+          handoffActive = true;
           window.location.href = TG_DEEPLINK;
-          setTimeout(function() {
+
+          fallbackTimer = setTimeout(function() {
+            fallbackTimer = null;
+            if (!handoffActive) return;
+            if (document.visibilityState === "hidden") {
+              confirmNativeAppHandoff("visibility_hidden_timer");
+              return;
+            }
+            // Снимаем флаг до перехода на TG_URL, чтобы pagehide от web-навигации не засчитался как tg-app.
+            handoffActive = false;
+            emitHandoffBeacon("web", ENDPOINT_TG_WEB, "web_fallback");
             window.location.replace(TG_URL);
-          }, 1100);
+          }, FALLBACK_DELAY_MS);
         } else {
+          handoffActive = false;
+          if (document.visibilityState === "visible") {
+            emitHandoffBeacon("web", ENDPOINT_TG_WEB, "desktop_redirect");
+          }
           window.location.href = TG_URL;
         }
       }
@@ -503,44 +626,84 @@
       if (isTikTok) {
         actionBtn.addEventListener("click", function(e) {
           e.preventDefault();
-          if (canTrackNow(3000)) {
-            trackClick("tiktok_in_app");
+          if (canTrackTikTokNow(3000)) {
+            sendBeaconEvent(ENDPOINT_TIKTOK_CLICK, { src: "tiktok_in_app", ts: Date.now() });
           }
           showActionCopiedState();
           document.body.classList.add("spotlight-active");
           silentCopyLink();
         });
       } else {
-        // Состояние 3: внешний браузер (Safari / Chrome) — авто-редирект за 100 мс
-        if (!isBot) {
+        // Слушаем фактический переход браузера в фон (открытие приложения Telegram)
+        document.addEventListener("visibilitychange", function() {
+          if (document.visibilityState === "hidden" && handoffActive) {
+            confirmNativeAppHandoff("visibility_hidden");
+          }
+        });
+
+        window.addEventListener("pagehide", function() {
+          if (handoffActive) {
+            confirmNativeAppHandoff("pagehide");
+          }
+        });
+
+        // При восстановлении вкладки из bfcache отменяем любые отложенные авто-действия
+        window.addEventListener("pageshow", function(e) {
+          if (e && e.persisted) {
+            handoffActive = false;
+            clearPendingFallback();
+            clearAutoStart();
+          }
+        });
+
+        function scheduleAutoRedirect() {
+          if (isBot || isRestoredNavigation() || hasRecentAnyHandoff()) {
+            return;
+          }
           if (statusBadge) statusBadge.classList.add("redirecting");
           if (badgeText) badgeText.textContent = "⚡ Перенаправляем в Telegram...";
-          if (canTrackNow(3000)) {
-            trackClick("external_browser");
+          clearAutoStart();
+          autoStartTimer = setTimeout(function() {
+            autoStartTimer = null;
+            if (document.visibilityState !== "visible") return;
+            openTelegramFromBrowser("external_browser");
+          }, AUTO_REDIRECT_DELAY_MS);
+        }
+
+        // Состояние 3: внешний браузер (Safari / Chrome) — авто-редирект только для активной новой вкладки
+        if (!isBot && !isRestoredNavigation() && !hasRecentAnyHandoff()) {
+          if (document.visibilityState === "visible") {
+            scheduleAutoRedirect();
+          } else {
+            const onFirstVisible = function() {
+              if (document.visibilityState === "visible") {
+                document.removeEventListener("visibilitychange", onFirstVisible);
+                scheduleAutoRedirect();
+              }
+            };
+            document.addEventListener("visibilitychange", onFirstVisible);
           }
-          setTimeout(openTelegramFromBrowser, 100);
         }
 
         actionBtn.addEventListener("click", function(e) {
-          if (canTrackNow(3000)) {
-            trackClick("external_browser");
-          }
-          if (isIOS || isAndroid) {
-            e.preventDefault();
-            openTelegramFromBrowser();
-          }
+          e.preventDefault();
+          clearAutoStart();
+          openTelegramFromBrowser("manual_cta");
         });
       }
 
-      // Вторичная кнопка ручного копирования ссылки
+      // Вторичная кнопка ручного копирования ссылки (отдельный эндпоинт, не влияет на счётчик TG)
       let copyResetTimer = null;
       copyBtn.addEventListener("click", function() {
         const now = Date.now();
-        const lastCopy = parseInt(sessionStorage.getItem("last_copy_click") || "0", 10);
-        if (now - lastCopy < 1500) return;
-        sessionStorage.setItem("last_copy_click", now.toString());
+        let lastCopy = 0;
+        try {
+          lastCopy = parseInt(sessionStorage.getItem("last_copy_click") || "0", 10) || 0;
+          if (now - lastCopy < 1500) return;
+          sessionStorage.setItem("last_copy_click", String(now));
+        } catch (e) {}
 
-        trackClick("copy_link");
+        sendBeaconEvent(ENDPOINT_COPY, { src: "copy_link", ts: now });
         silentCopyLink(function() {
           copyBtn.classList.add("copied");
           copyIcon.textContent = "✓";
