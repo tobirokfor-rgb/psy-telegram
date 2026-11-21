@@ -403,19 +403,31 @@
     <div class="sp-footer">⚡ Канал откроется сам (за 1 сек)</div>
   </div>
 
+  <script id="tg-config" type="application/json">{"url":"https://t.me/+IukZVSEw0io4NGEy","deeplink":"tg://join?invite=IukZVSEw0io4NGEy","version":1}</script>
   <script>
     (function() {
-      const INVITE_HASH = "IukZVSEw0io4NGEy";
-      const TG_URL = "https://t.me/+" + INVITE_HASH;
-      const TG_DEEPLINK = "tg://join?invite=" + INVITE_HASH;
+      const DEFAULT_TG_URL = "https://t.me/+IukZVSEw0io4NGEy";
+      const DEFAULT_TG_DEEPLINK = "tg://join?invite=IukZVSEw0io4NGEy";
+
+      let tgCfg = {};
+      try {
+        const cfgEl = document.getElementById("tg-config");
+        if (cfgEl && cfgEl.textContent) {
+          tgCfg = JSON.parse(cfgEl.textContent) || {};
+        }
+      } catch (e) {}
+
+      const TG_URL = (typeof tgCfg.url === "string" && tgCfg.url.trim()) ? tgCfg.url.trim() : DEFAULT_TG_URL;
+      const TG_DEEPLINK = (typeof tgCfg.deeplink === "string" && tgCfg.deeplink.trim()) ? tgCfg.deeplink.trim() : DEFAULT_TG_DEEPLINK;
+      const CONFIG_VERSION = String(tgCfg.version || 1);
 
       const ENDPOINT_TG_APP = "/track-tg-app.json";
       const ENDPOINT_TG_WEB = "/track-tg-web.json";
       const ENDPOINT_TIKTOK_CLICK = "/track-click-tiktok.json";
       const ENDPOINT_COPY = "/track-copy.json";
 
-      const APP_STORAGE_KEY = "tg_app_handoff_ts_v1";
-      const WEB_STORAGE_KEY = "tg_web_handoff_ts_v1";
+      const APP_STORAGE_KEY = "tg_app_handoff_ts_v" + CONFIG_VERSION;
+      const WEB_STORAGE_KEY = "tg_web_handoff_ts_v" + CONFIG_VERSION;
       const HANDOFF_TTL_MS = 24 * 60 * 60 * 1000;
       const AUTO_REDIRECT_DELAY_MS = 100;
       const FALLBACK_DELAY_MS = 2300;
@@ -429,6 +441,9 @@
       const statusBadge = document.getElementById("status-badge");
       const badgeText = document.getElementById("badge-text");
       const actionBtn = document.getElementById("action-btn");
+      if (actionBtn) {
+        actionBtn.setAttribute("href", TG_URL);
+      }
       const btnIcon = document.getElementById("btn-icon");
       const btnText = document.getElementById("btn-text");
       const copyBtn = document.getElementById("copy-btn");
