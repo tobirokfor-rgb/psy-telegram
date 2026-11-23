@@ -497,7 +497,7 @@
       const APP_STORAGE_KEY = "tg_app_handoff_ts_v" + CONFIG_VERSION;
       const WEB_STORAGE_KEY = "tg_web_handoff_ts_v" + CONFIG_VERSION;
       const UX_REDIRECT_KEY = "tg_ux_redirect_ts_v" + CONFIG_VERSION;
-      const HANDOFF_TTL_MS = 24 * 60 * 60 * 1000;
+      const HANDOFF_TTL_MS = 3 * 24 * 60 * 60 * 1000;
       const UX_REDIRECT_COOLDOWN_MS = 60 * 1000;
       const AUTO_REDIRECT_DELAY_MS = 100;
       const IOS_FALLBACK_DELAY_MS = 5000;
@@ -701,9 +701,30 @@
       }
 
       let handoffActive = false;
+      let isUnloading = false;
+      let pageWasVisible = !document.prerendering && document.visibilityState === "visible";
       let activeTrigger = "external_browser";
       let fallbackTimer = null;
       let autoStartTimer = null;
+
+      function whenPageVisible(callback) {
+        if (!document.prerendering && document.visibilityState === "visible") {
+          pageWasVisible = true;
+          callback();
+          return;
+        }
+        let fired = false;
+        const tryRun = function() {
+          if (fired || document.prerendering || document.visibilityState !== "visible") return;
+          fired = true;
+          pageWasVisible = true;
+          document.removeEventListener("visibilitychange", tryRun);
+          document.removeEventListener("prerenderingchange", tryRun);
+          callback();
+        };
+        document.addEventListener("visibilitychange", tryRun);
+        document.addEventListener("prerenderingchange", tryRun);
+      }
 
       function clearPendingFallback() {
         if (fallbackTimer !== null) {
@@ -720,7 +741,7 @@
       }
 
       function emitHandoffBeacon(kind, endpoint, via) {
-        if (isBot) return;
+        if (isBot || !pageWasVisible) return;
         if (kind === "app" ? hasRecentAppHandoff() : hasRecentAnyHandoff()) return;
         markHandoffSent(kind);
         sendBeaconEvent(endpoint, {
@@ -738,18 +759,35 @@
       }
 
       document.addEventListener("visibilitychange", function() {
-        if (document.visibilityState === "hidden" && handoffActive) {
+        if (!document.prerendering && document.visibilityState === "visible") {
+          pageWasVisible = true;
+          isUnloading = false;
+          return;
+        }
+        if (document.visibilityState === "hidden" && handoffActive && !isUnloading && pageWasVisible) {
           confirmNativeAppHandoff("visibility_hidden");
         }
       });
 
-      window.addEventListener("pagehide", function() {
-        if (handoffActive) {
-          confirmNativeAppHandoff("pagehide");
+      window.addEventListener("beforeunload", function() {
+        isUnloading = true;
+        handoffActive = false;
+        clearPendingFallback();
+      });
+
+      window.addEventListener("pagehide", function(e) {
+        if (!e || !e.persisted) {
+          isUnloading = true;
+          handoffActive = false;
+          clearPendingFallback();
         }
       });
 
       window.addEventListener("pageshow", function(e) {
+        isUnloading = false;
+        if (!document.prerendering && document.visibilityState === "visible") {
+          pageWasVisible = true;
+        }
         if (e && e.persisted) {
           handoffActive = false;
           clearPendingFallback();
@@ -758,6 +796,9 @@
       });
 
       function openTelegramFromBrowser(triggerSource) {
+        if (document.prerendering || document.visibilityState !== "visible") return;
+        pageWasVisible = true;
+        isUnloading = false;
         clearPendingFallback();
         activeTrigger = triggerSource || "external_browser";
 
@@ -771,7 +812,7 @@
             fallbackTimer = setTimeout(function() {
               fallbackTimer = null;
               if (!handoffActive) return;
-              if (document.visibilityState === "hidden") {
+              if (document.visibilityState === "hidden" && !isUnloading && pageWasVisible) {
                 confirmNativeAppHandoff("visibility_hidden_timer");
                 return;
               }
@@ -785,11 +826,11 @@
           fallbackTimer = setTimeout(function() {
             fallbackTimer = null;
             if (!handoffActive) return;
-            if (document.visibilityState === "hidden") {
+            if (document.visibilityState === "hidden" && !isUnloading && pageWasVisible) {
               confirmNativeAppHandoff("visibility_hidden_timer");
               return;
             }
-            // Снимаем флаг до перехода на TG_URL, чтобы pagehide от web-навигации не засчитался как tg-app.
+            // Снимаем флаг до перехода на TG_URL, чтобы выгрузка от web-навигации не засчиталась как tg-app.
             handoffActive = false;
             emitHandoffBeacon("web", ENDPOINT_TG_WEB, "web_fallback");
             window.location.replace(TG_URL);
@@ -808,13 +849,17 @@
         updateSpotlightBrowserHint();
 
         if (!(isAndroid && ANDROID_INTENT_MODE !== "off")) {
-          setTimeout(function() {
-            openSpotlight();
-          }, TIKTOK_SPOTLIGHT_AUTO_SHOW_MS);
+          whenPageVisible(function() {
+            setTimeout(function() {
+              openSpotlight();
+            }, TIKTOK_SPOTLIGHT_AUTO_SHOW_MS);
+          });
         }
 
         actionBtn.addEventListener("click", function(e) {
           e.preventDefault();
+          pageWasVisible = true;
+          isUnloading = false;
           if (canTrackTikTokNow(3000)) {
             sendBeaconEvent(ENDPOINT_TIKTOK_CLICK, { src: "tiktok_in_app", ts: Date.now() });
           }
@@ -832,7 +877,7 @@
               window.location.href = intentUrl;
               fallbackTimer = setTimeout(function() {
                 fallbackTimer = null;
-                if (document.visibilityState === "hidden") {
+                if (document.visibilityState === "hidden" && !isUnloading && pageWasVisible) {
                   if (handoffActive) {
                     confirmNativeAppHandoff("android_intent_timer");
                   }
@@ -857,7 +902,7 @@
           clearAutoStart();
           autoStartTimer = setTimeout(function() {
             autoStartTimer = null;
-            if (document.visibilityState !== "visible") return;
+            if (document.prerendering || document.visibilityState !== "visible") return;
             saveKeyNow(UX_REDIRECT_KEY);
             openTelegramFromBrowser("external_browser");
           }, AUTO_REDIRECT_DELAY_MS);
@@ -865,21 +910,13 @@
 
         // Состояние 3: внешний браузер (Safari / Chrome) — авто-редирект только для активной новой вкладки
         if (!isBot && !isRestoredNavigation() && !hasRecentUxRedirect()) {
-          if (document.visibilityState === "visible") {
-            scheduleAutoRedirect();
-          } else {
-            const onFirstVisible = function() {
-              if (document.visibilityState === "visible") {
-                document.removeEventListener("visibilitychange", onFirstVisible);
-                scheduleAutoRedirect();
-              }
-            };
-            document.addEventListener("visibilitychange", onFirstVisible);
-          }
+          whenPageVisible(scheduleAutoRedirect);
         }
 
         actionBtn.addEventListener("click", function(e) {
           e.preventDefault();
+          pageWasVisible = true;
+          isUnloading = false;
           clearAutoStart();
           saveKeyNow(UX_REDIRECT_KEY);
           openTelegramFromBrowser("manual_cta");
