@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Переход в закрытый канал</title>
   <meta name="description" content="Психология себя и людей: закрытые разборы, которые не пропускает TikTok.">
+  <meta name="robots" content="noindex, nofollow">
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="shortcut icon" href="/favicon.ico">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -241,7 +242,40 @@
       color: var(--emerald-soft);
     }
 
-    /* Spotlight Impulse Overlay (Activated inside TikTok WebView on CTA tap) */
+    .manual-copy-box {
+      display: none;
+      margin-top: 2px;
+      padding: 10px 12px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 12px;
+      text-align: left;
+    }
+
+    .manual-copy-box.visible {
+      display: block;
+    }
+
+    .manual-copy-label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--accent-sky);
+      margin-bottom: 6px;
+    }
+
+    .manual-copy-box input {
+      width: 100%;
+      background: rgba(2, 6, 23, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: #f8fafc;
+      font-size: 12.5px;
+      outline: none;
+    }
+
+    /* Spotlight Impulse Overlay (Activated inside TikTok / embedded WebView) */
     .spotlight-backdrop {
       display: none;
       position: fixed;
@@ -253,7 +287,8 @@
         rgba(11, 14, 20, 0.68) 42%,
         rgba(4, 6, 10, 0.90) 100%
       );
-      pointer-events: none;
+      pointer-events: auto;
+      cursor: pointer;
       animation: backdropFade 0.24s ease-out;
     }
 
@@ -290,6 +325,28 @@
       display: block;
     }
 
+    .sp-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background: rgba(30, 41, 59, 0.78);
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sp-close:active {
+      transform: scale(0.94);
+    }
+
     .spotlight-caret {
       position: absolute;
       top: -9px;
@@ -307,6 +364,7 @@
       font-weight: 800;
       color: #ffffff;
       margin-bottom: 10px;
+      padding-right: 28px;
       line-height: 1.25;
     }
 
@@ -385,25 +443,31 @@
           <span id="copy-icon">📋</span>
           <span id="copy-text">Скопировать ссылку</span>
         </button>
+
+        <div id="manual-copy-box" class="manual-copy-box">
+          <label for="manual-copy-input" class="manual-copy-label">Зажми и нажми «Копировать»:</label>
+          <input id="manual-copy-input" type="text" readonly>
+        </div>
       </div>
     </main>
   </div>
 
-  <div class="spotlight-backdrop" aria-hidden="true"></div>
+  <div id="spotlight-backdrop" class="spotlight-backdrop" aria-hidden="true"></div>
   <div id="spotlight-popover" class="spotlight-popover" role="dialog" aria-live="polite" aria-label="Как открыть канал в браузере">
     <div class="spotlight-caret" aria-hidden="true"></div>
+    <button type="button" id="sp-close-btn" class="sp-close" aria-label="Закрыть подсказку">✕</button>
     <div class="sp-title">TikTok блокирует прямой вход 🔒</div>
     <div class="sp-step sp-step-active">
       <span>1. Нажми <strong>•••</strong> вот тут</span>
       <span class="sp-arrow">↗</span>
     </div>
-    <div class="sp-step">
+    <div id="sp-step-2" class="sp-step">
       2. Выбери <strong>«Открыть в браузере»</strong>
     </div>
     <div class="sp-footer">⚡ Канал откроется сам (за 1 сек)</div>
   </div>
 
-  <script id="tg-config" type="application/json">{"url":"https://t.me/+IukZVSEw0io4NGEy","deeplink":"tg://join?invite=IukZVSEw0io4NGEy","version":1}</script>
+  <script id="tg-config" type="application/json">{"url":"https://t.me/+IukZVSEw0io4NGEy","deeplink":"tg://join?invite=IukZVSEw0io4NGEy","version":1,"android_intent_mode":"off"}</script>
   <script>
     (function() {
       const DEFAULT_TG_URL = "https://t.me/+IukZVSEw0io4NGEy";
@@ -420,6 +484,10 @@
       const TG_URL = (typeof tgCfg.url === "string" && tgCfg.url.trim()) ? tgCfg.url.trim() : DEFAULT_TG_URL;
       const TG_DEEPLINK = (typeof tgCfg.deeplink === "string" && tgCfg.deeplink.trim()) ? tgCfg.deeplink.trim() : DEFAULT_TG_DEEPLINK;
       const CONFIG_VERSION = String(tgCfg.version || 1);
+      const ANDROID_INTENT_MODE =
+        (typeof tgCfg.android_intent_mode === "string" && ["off", "telegram", "browser"].indexOf(tgCfg.android_intent_mode) !== -1)
+          ? tgCfg.android_intent_mode
+          : "off";
 
       const ENDPOINT_TG_APP = "/track-tg-app.json";
       const ENDPOINT_TG_WEB = "/track-tg-web.json";
@@ -428,15 +496,23 @@
 
       const APP_STORAGE_KEY = "tg_app_handoff_ts_v" + CONFIG_VERSION;
       const WEB_STORAGE_KEY = "tg_web_handoff_ts_v" + CONFIG_VERSION;
+      const UX_REDIRECT_KEY = "tg_ux_redirect_ts_v" + CONFIG_VERSION;
       const HANDOFF_TTL_MS = 24 * 60 * 60 * 1000;
+      const UX_REDIRECT_COOLDOWN_MS = 60 * 1000;
       const AUTO_REDIRECT_DELAY_MS = 100;
-      const FALLBACK_DELAY_MS = 2300;
+      const IOS_FALLBACK_DELAY_MS = 5000;
+      const ANDROID_FALLBACK_DELAY_MS = 2200;
+      const GENERIC_IOS_WEBVIEW_SPOTLIGHT_MS = 2500;
+      const ANDROID_INTENT_FALLBACK_MS = 900;
+      const TIKTOK_SPOTLIGHT_AUTO_SHOW_MS = 380;
 
       const ua = navigator.userAgent || "";
       const isTikTok = /musical_ly|trill|BytedanceWebview|TikTok|ByteLocale/i.test(ua);
-      const isBot = /bot|crawl|spider|slurp|facebookexternalhit|telegrambot|twitterbot|whatsapp|pinterest|peek|preview/i.test(ua);
+      const isBot = /bot|crawl|spider|slurp|facebookexternalhit|facebot|telegrambot|twitterbot|whatsapp|pinterest|peek|preview|google-read-aloud|googleother|oai-searchbot|chatgpt-user|yandex|bytespider|headless|ttauto/i.test(ua);
       const isIOS = /iPhone|iPad|iPod/i.test(ua);
       const isAndroid = /Android/i.test(ua);
+      const isGenericIOSWebView =
+        isIOS && !isTikTok && !/Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|YaBrowser|OPiOS/i.test(ua);
 
       const statusBadge = document.getElementById("status-badge");
       const badgeText = document.getElementById("badge-text");
@@ -444,11 +520,14 @@
       if (actionBtn) {
         actionBtn.setAttribute("href", TG_URL);
       }
-      const btnIcon = document.getElementById("btn-icon");
-      const btnText = document.getElementById("btn-text");
       const copyBtn = document.getElementById("copy-btn");
       const copyIcon = document.getElementById("copy-icon");
       const copyText = document.getElementById("copy-text");
+      const manualCopyBox = document.getElementById("manual-copy-box");
+      const manualCopyInput = document.getElementById("manual-copy-input");
+      const spotlightBackdrop = document.getElementById("spotlight-backdrop");
+      const spCloseBtn = document.getElementById("sp-close-btn");
+      const spStep2 = document.getElementById("sp-step-2");
 
       let appSentInPage = false;
       let webSentInPage = false;
@@ -473,12 +552,12 @@
         }
       }
 
-      function isKeyFresh(storageKey) {
+      function isKeyFresh(storageKey, ttlMs) {
         try {
           const raw = window.localStorage.getItem(storageKey);
           if (!raw) return false;
           const ts = parseInt(raw, 10);
-          return !isNaN(ts) && (Date.now() - ts) < HANDOFF_TTL_MS;
+          return !isNaN(ts) && (Date.now() - ts) < (ttlMs !== undefined ? ttlMs : HANDOFF_TTL_MS);
         } catch (e) {
           return false;
         }
@@ -491,11 +570,15 @@
       }
 
       function hasRecentAppHandoff() {
-        return appSentInPage || isKeyFresh(APP_STORAGE_KEY);
+        return appSentInPage || isKeyFresh(APP_STORAGE_KEY, HANDOFF_TTL_MS);
       }
 
       function hasRecentAnyHandoff() {
-        return hasRecentAppHandoff() || webSentInPage || isKeyFresh(WEB_STORAGE_KEY);
+        return hasRecentAppHandoff() || webSentInPage || isKeyFresh(WEB_STORAGE_KEY, HANDOFF_TTL_MS);
+      }
+
+      function hasRecentUxRedirect() {
+        return isKeyFresh(UX_REDIRECT_KEY, UX_REDIRECT_COOLDOWN_MS);
       }
 
       function markHandoffSent(kind) {
@@ -535,24 +618,78 @@
           temp.setSelectionRange(0, temp.value.length);
           const ok = document.execCommand("copy");
           document.body.removeChild(temp);
-          return ok;
+          return Boolean(ok);
         } catch (e) {
           return false;
         }
       }
 
-      function silentCopyLink(onDone) {
+      function copyLinkVerified(onSuccess, onFailure) {
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(TG_URL).then(function() {
-            if (onDone) onDone();
+            if (onSuccess) onSuccess();
           }).catch(function() {
-            legacyExecCopy(TG_URL);
-            if (onDone) onDone();
+            if (legacyExecCopy(TG_URL)) {
+              if (onSuccess) onSuccess();
+            } else if (onFailure) {
+              onFailure();
+            }
           });
-        } else {
-          legacyExecCopy(TG_URL);
-          if (onDone) onDone();
+        } else if (legacyExecCopy(TG_URL)) {
+          if (onSuccess) onSuccess();
+        } else if (onFailure) {
+          onFailure();
         }
+      }
+
+      function showManualCopyFallback() {
+        if (!manualCopyBox || !manualCopyInput) return;
+        manualCopyInput.value = TG_URL;
+        manualCopyBox.classList.add("visible");
+        try {
+          manualCopyInput.focus();
+          manualCopyInput.select();
+          manualCopyInput.setSelectionRange(0, TG_URL.length);
+        } catch (e) {}
+      }
+
+      function updateSpotlightBrowserHint() {
+        if (!spStep2) return;
+        if (isIOS) {
+          spStep2.innerHTML = '2. Выбери <strong>«Открыть в браузере»</strong> (Safari 🧭)';
+        } else if (isAndroid) {
+          spStep2.innerHTML = '2. Выбери <strong>«Открыть в браузере»</strong> (Chrome)';
+        } else {
+          spStep2.innerHTML = '2. Выбери <strong>«Открыть в браузере»</strong>';
+        }
+      }
+
+      function openSpotlight() {
+        updateSpotlightBrowserHint();
+        document.body.classList.add("spotlight-active");
+      }
+
+      function closeSpotlight() {
+        document.body.classList.remove("spotlight-active");
+      }
+
+      if (spotlightBackdrop) {
+        spotlightBackdrop.addEventListener("click", closeSpotlight);
+      }
+      if (spCloseBtn) {
+        spCloseBtn.addEventListener("click", closeSpotlight);
+      }
+
+      function buildAndroidIntentUrl(mode, tgDeeplink) {
+        if (mode === "telegram") {
+          const rawTail = String(tgDeeplink || "").replace(/^tg:\/\//i, "");
+          return "intent://" + rawTail + "#Intent;scheme=tg;package=org.telegram.messenger;end";
+        }
+        if (mode === "browser") {
+          const targetHostPath = window.location.host + window.location.pathname + window.location.search;
+          return "intent://" + targetHostPath + "#Intent;scheme=https;package=com.android.chrome;end";
+        }
+        return "";
       }
 
       let lastTikTokTrackTs = 0;
@@ -561,12 +698,6 @@
         if (now - lastTikTokTrackTs < cooldownMs) return false;
         lastTikTokTrackTs = now;
         return true;
-      }
-
-      function showActionCopiedState() {
-        actionBtn.classList.add("cta-copied");
-        if (btnIcon) btnIcon.style.display = "none";
-        btnText.textContent = "✓ Ссылка скопирована";
       }
 
       let handoffActive = false;
@@ -606,16 +737,51 @@
         emitHandoffBeacon("app", ENDPOINT_TG_APP, reason);
       }
 
+      document.addEventListener("visibilitychange", function() {
+        if (document.visibilityState === "hidden" && handoffActive) {
+          confirmNativeAppHandoff("visibility_hidden");
+        }
+      });
+
+      window.addEventListener("pagehide", function() {
+        if (handoffActive) {
+          confirmNativeAppHandoff("pagehide");
+        }
+      });
+
+      window.addEventListener("pageshow", function(e) {
+        if (e && e.persisted) {
+          handoffActive = false;
+          clearPendingFallback();
+          clearAutoStart();
+        }
+      });
+
       function openTelegramFromBrowser(triggerSource) {
         clearPendingFallback();
         activeTrigger = triggerSource || "external_browser";
 
         if (isIOS || isAndroid) {
           // Маячок срабатывает только при фактическом уходе браузера в приложение (visibilitychange -> hidden)
-          // либо ровно перед web-fallback, если tg:// не перехватило приложение за FALLBACK_DELAY_MS.
+          // либо ровно перед web-fallback / Spotlight (для скрытого iOS WKWebView).
           handoffActive = true;
           window.location.href = TG_DEEPLINK;
 
+          if (isGenericIOSWebView) {
+            fallbackTimer = setTimeout(function() {
+              fallbackTimer = null;
+              if (!handoffActive) return;
+              if (document.visibilityState === "hidden") {
+                confirmNativeAppHandoff("visibility_hidden_timer");
+                return;
+              }
+              handoffActive = false;
+              openSpotlight();
+            }, GENERIC_IOS_WEBVIEW_SPOTLIGHT_MS);
+            return;
+          }
+
+          const delayMs = isIOS ? IOS_FALLBACK_DELAY_MS : ANDROID_FALLBACK_DELAY_MS;
           fallbackTimer = setTimeout(function() {
             fallbackTimer = null;
             if (!handoffActive) return;
@@ -627,7 +793,7 @@
             handoffActive = false;
             emitHandoffBeacon("web", ENDPOINT_TG_WEB, "web_fallback");
             window.location.replace(TG_URL);
-          }, FALLBACK_DELAY_MS);
+          }, delayMs);
         } else {
           handoffActive = false;
           if (document.visibilityState === "visible") {
@@ -637,42 +803,53 @@
         }
       }
 
-      // Состояние 2: внутри TikTok WebView перехватываем клик и включаем Spotlight-импульс
+      // Состояние 2: внутри TikTok WebView
       if (isTikTok) {
+        updateSpotlightBrowserHint();
+
+        if (!(isAndroid && ANDROID_INTENT_MODE !== "off")) {
+          setTimeout(function() {
+            openSpotlight();
+          }, TIKTOK_SPOTLIGHT_AUTO_SHOW_MS);
+        }
+
         actionBtn.addEventListener("click", function(e) {
           e.preventDefault();
           if (canTrackTikTokNow(3000)) {
             sendBeaconEvent(ENDPOINT_TIKTOK_CLICK, { src: "tiktok_in_app", ts: Date.now() });
           }
-          showActionCopiedState();
-          document.body.classList.add("spotlight-active");
-          silentCopyLink();
+
+          if (isAndroid && ANDROID_INTENT_MODE !== "off") {
+            const intentUrl = buildAndroidIntentUrl(ANDROID_INTENT_MODE, TG_DEEPLINK);
+            if (intentUrl) {
+              clearPendingFallback();
+              if (ANDROID_INTENT_MODE === "telegram") {
+                activeTrigger = "tiktok_android_intent";
+                handoffActive = true;
+              } else {
+                handoffActive = false;
+              }
+              window.location.href = intentUrl;
+              fallbackTimer = setTimeout(function() {
+                fallbackTimer = null;
+                if (document.visibilityState === "hidden") {
+                  if (handoffActive) {
+                    confirmNativeAppHandoff("android_intent_timer");
+                  }
+                  return;
+                }
+                handoffActive = false;
+                openSpotlight();
+              }, ANDROID_INTENT_FALLBACK_MS);
+              return;
+            }
+          }
+
+          openSpotlight();
         });
       } else {
-        // Слушаем фактический переход браузера в фон (открытие приложения Telegram)
-        document.addEventListener("visibilitychange", function() {
-          if (document.visibilityState === "hidden" && handoffActive) {
-            confirmNativeAppHandoff("visibility_hidden");
-          }
-        });
-
-        window.addEventListener("pagehide", function() {
-          if (handoffActive) {
-            confirmNativeAppHandoff("pagehide");
-          }
-        });
-
-        // При восстановлении вкладки из bfcache отменяем любые отложенные авто-действия
-        window.addEventListener("pageshow", function(e) {
-          if (e && e.persisted) {
-            handoffActive = false;
-            clearPendingFallback();
-            clearAutoStart();
-          }
-        });
-
         function scheduleAutoRedirect() {
-          if (isBot || isRestoredNavigation() || hasRecentAnyHandoff()) {
+          if (isBot || isRestoredNavigation() || hasRecentUxRedirect()) {
             return;
           }
           if (statusBadge) statusBadge.classList.add("redirecting");
@@ -681,12 +858,13 @@
           autoStartTimer = setTimeout(function() {
             autoStartTimer = null;
             if (document.visibilityState !== "visible") return;
+            saveKeyNow(UX_REDIRECT_KEY);
             openTelegramFromBrowser("external_browser");
           }, AUTO_REDIRECT_DELAY_MS);
         }
 
         // Состояние 3: внешний браузер (Safari / Chrome) — авто-редирект только для активной новой вкладки
-        if (!isBot && !isRestoredNavigation() && !hasRecentAnyHandoff()) {
+        if (!isBot && !isRestoredNavigation() && !hasRecentUxRedirect()) {
           if (document.visibilityState === "visible") {
             scheduleAutoRedirect();
           } else {
@@ -703,6 +881,7 @@
         actionBtn.addEventListener("click", function(e) {
           e.preventDefault();
           clearAutoStart();
+          saveKeyNow(UX_REDIRECT_KEY);
           openTelegramFromBrowser("manual_cta");
         });
       }
@@ -719,17 +898,23 @@
         } catch (e) {}
 
         sendBeaconEvent(ENDPOINT_COPY, { src: "copy_link", ts: now });
-        silentCopyLink(function() {
-          copyBtn.classList.add("copied");
-          copyIcon.textContent = "✓";
-          copyText.textContent = "Ссылка скопирована!";
-          if (copyResetTimer) clearTimeout(copyResetTimer);
-          copyResetTimer = setTimeout(function() {
-            copyBtn.classList.remove("copied");
-            copyIcon.textContent = "📋";
-            copyText.textContent = "Скопировать ссылку";
-          }, 3000);
-        });
+        copyLinkVerified(
+          function() {
+            if (manualCopyBox) manualCopyBox.classList.remove("visible");
+            copyBtn.classList.add("copied");
+            copyIcon.textContent = "✓";
+            copyText.textContent = "Ссылка скопирована!";
+            if (copyResetTimer) clearTimeout(copyResetTimer);
+            copyResetTimer = setTimeout(function() {
+              copyBtn.classList.remove("copied");
+              copyIcon.textContent = "📋";
+              copyText.textContent = "Скопировать ссылку";
+            }, 3000);
+          },
+          function() {
+            showManualCopyFallback();
+          }
+        );
       });
     })();
   </script>

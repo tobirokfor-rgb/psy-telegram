@@ -65,19 +65,30 @@ test("rewriteIndexHtml replaces #action-btn href and #tg-config safely", () => {
     url: "https://t.me/new_channel",
     deeplink: "tg://resolve?domain=new_channel",
     version: 7,
+    android_intent_mode: "telegram",
   });
   assert.ok(out.includes('href="https://t.me/new_channel" id="action-btn"'));
   assert.ok(
     out.includes(
-      '<script id="tg-config" type="application/json">{"url":"https://t.me/new_channel","deeplink":"tg://resolve?domain=new_channel","version":7}</script>',
+      '<script id="tg-config" type="application/json">{"url":"https://t.me/new_channel","deeplink":"tg://resolve?domain=new_channel","version":7,"android_intent_mode":"telegram"}</script>',
     ),
   );
-  // Original title and beacons remain intact
+  // Unknown android_intent_mode falls back cleanly to "off"
+  const outInvalid = rewriteIndexHtml(shellHtml, {
+    url: "https://t.me/new_channel",
+    deeplink: "tg://resolve?domain=new_channel",
+    version: 7,
+    android_intent_mode: "bogus",
+  });
+  assert.ok(outInvalid.includes('"android_intent_mode":"off"'));
+  // Original title, noindex meta, 5000ms iOS timeout, and beacons remain intact
   assert.ok(out.includes("<h1>Психология себя и людей</h1>"));
+  assert.ok(out.includes('<meta name="robots" content="noindex, nofollow">'));
+  assert.ok(out.includes("const IOS_FALLBACK_DELAY_MS = 5000;"));
   assert.ok(out.includes("/track-tg-app.json"));
 });
 
-test("Worker injects KV link on GET /, sets no-store, strips ETag, and ignores client conditional headers", async () => {
+test("Worker injects KV link and android_intent_mode on GET /, sets no-store & X-Robots-Tag, and ignores client conditional headers", async () => {
   const assets = makeAssetsMock();
   const env = {
     ASSETS: assets,
@@ -89,6 +100,7 @@ test("Worker injects KV link on GET /, sets no-store, strips ETag, and ignores c
         return {
           url: "https://t.me/psy_public_hub",
           version: 4,
+          android_intent_mode: "browser",
         };
       },
     },
@@ -105,6 +117,7 @@ test("Worker injects KV link on GET /, sets no-store, strips ETag, and ignores c
   const resp = await worker.fetch(req, env);
   assert.equal(resp.status, 200);
   assert.equal(resp.headers.get("Cache-Control"), "no-store, no-cache, must-revalidate, max-age=0");
+  assert.equal(resp.headers.get("X-Robots-Tag"), "noindex, nofollow");
   assert.equal(resp.headers.get("etag"), null);
   assert.equal(resp.headers.get("last-modified"), null);
 
@@ -116,6 +129,13 @@ test("Worker injects KV link on GET /, sets no-store, strips ETag, and ignores c
   assert.ok(html.includes('href="https://t.me/psy_public_hub" id="action-btn"'));
   assert.ok(html.includes('"deeplink":"tg://resolve?domain=psy_public_hub"'));
   assert.ok(html.includes('"version":4'));
+  assert.ok(html.includes('"android_intent_mode":"browser"'));
+});
+
+test("public/robots.txt blocks crawler indexing", () => {
+  const robotsTxt = fs.readFileSync(path.join(__dirname, "..", "public", "robots.txt"), "utf8");
+  assert.ok(robotsTxt.includes("Disallow: /"));
+  assert.ok(!robotsTxt.includes("Allow: /"));
 });
 
 test("Worker falls back to DEFAULT_TG_URL when KV fails or is empty", async () => {

@@ -112,15 +112,21 @@ function serializeSafeJsonForScript(obj) {
     .replaceAll("&", "\\u0026");
 }
 
+function normalizeAndroidIntentMode(rawMode) {
+  const clean = String(rawMode || "").trim().toLowerCase();
+  return ["off", "telegram", "browser"].includes(clean) ? clean : "off";
+}
+
 /**
  * Rewrites #action-btn href and #tg-config JSON block inside the shell index.html.
  */
-export function rewriteIndexHtml(html, { url, deeplink, version = 1 }) {
+export function rewriteIndexHtml(html, { url, deeplink, version = 1, android_intent_mode = "off" }) {
   const safeUrlAttr = escapeHtmlAttr(url);
   const safeJson = serializeSafeJsonForScript({
     url,
     deeplink,
     version: Number(version) || 1,
+    android_intent_mode: normalizeAndroidIntentMode(android_intent_mode),
   });
 
   // Update href on <a ... id="action-btn" ...> regardless of attribute order
@@ -178,6 +184,7 @@ export default {
       resolveTelegramLink(FALLBACK_TG_URL);
 
     const version = Number(kvCfg?.version) > 0 ? Number(kvCfg.version) : 1;
+    const androidIntentMode = normalizeAndroidIntentMode(kvCfg?.android_intent_mode);
 
     // Request static /index.html cleanly without client conditional headers (avoids 304 without body)
     const assetReq = new Request(new URL("/index.html", request.url), { method: "GET" });
@@ -191,12 +198,14 @@ export default {
       url: resolved.url,
       deeplink: resolved.deeplink,
       version,
+      android_intent_mode: androidIntentMode,
     });
 
     const headers = new Headers(assetResp.headers);
     headers.set("Content-Type", "text/html; charset=utf-8");
     headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
     headers.set("Pragma", "no-cache");
+    headers.set("X-Robots-Tag", "noindex, nofollow");
     headers.delete("etag");
     headers.delete("last-modified");
     headers.delete("content-length");
