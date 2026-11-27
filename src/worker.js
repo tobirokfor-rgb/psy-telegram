@@ -6,6 +6,7 @@
  */
 
 const FALLBACK_TG_URL = "https://t.me/+IukZVSEw0io4NGEy";
+const DEFAULT_DISPLAY_MEMBERS = "15K участников";
 const CHANNEL_META_KV_KEY = "channel_meta_cache";
 const CHANNEL_META_TTL_MS = 6 * 60 * 60 * 1000;
 
@@ -370,6 +371,11 @@ export default {
     const avatarSrc = channelMeta?.avatarUrl
       ? `/channel-avatar?v=${encodeURIComponent(String(channelMeta.fetchedAt || version))}`
       : "";
+    const rawDisplayMembers = String(kvCfg?.display_members || "").trim();
+    const channelMembers =
+      rawDisplayMembers.toLowerCase() === "auto"
+        ? channelMeta?.membersText || ""
+        : rawDisplayMembers || DEFAULT_DISPLAY_MEMBERS;
 
     // Request static /index.html cleanly without client conditional headers (avoids 304 without body)
     const assetReq = new Request(new URL("/index.html", request.url), { method: "GET" });
@@ -385,7 +391,7 @@ export default {
       version,
       android_intent_mode: androidIntentMode,
       channelTitle: channelMeta?.title || "",
-      channelMembers: channelMeta?.membersText || "",
+      channelMembers,
       avatarSrc,
     });
 

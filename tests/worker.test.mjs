@@ -239,8 +239,49 @@ test("Worker injects cached channel meta from KV and returns 404 on /channel-ava
   assert.equal(resp.status, 200);
   const html = await resp.text();
   assert.ok(html.includes('<h1 id="channel-title">Тёмная психология</h1>'));
-  assert.ok(html.includes('<span id="channel-sub">Закрытый канал · 612 участников</span>'));
+  assert.ok(html.includes('<span id="channel-sub">Закрытый канал · 15K участников</span>'));
 
   const avatarResp = await worker.fetch(new Request("https://psy-telegram.tobirokfor.workers.dev/channel-avatar"), env);
   assert.equal(avatarResp.status, 404);
+});
+
+test("Worker uses custom display_members from KV and supports auto mode", async () => {
+  const assets = makeAssetsMock();
+  const baseMeta = {
+    url: "https://t.me/psy_public_hub",
+    title: "Тёмная психология",
+    membersText: "612 участников",
+    avatarUrl: "",
+    fetchedAt: Date.now(),
+  };
+
+  const envCustom = {
+    ASSETS: assets,
+    LINK_CONFIG_KV: {
+      async get(key) {
+        if (key === "channel_config") {
+          return { url: "https://t.me/psy_public_hub", version: 5, display_members: "11K участников" };
+        }
+        if (key === "channel_meta_cache") return baseMeta;
+        return null;
+      },
+    },
+  };
+  const respCustom = await worker.fetch(new Request("https://psy-telegram.tobirokfor.workers.dev/"), envCustom);
+  assert.ok((await respCustom.text()).includes('<span id="channel-sub">Закрытый канал · 11K участников</span>'));
+
+  const envAuto = {
+    ASSETS: assets,
+    LINK_CONFIG_KV: {
+      async get(key) {
+        if (key === "channel_config") {
+          return { url: "https://t.me/psy_public_hub", version: 5, display_members: "auto" };
+        }
+        if (key === "channel_meta_cache") return baseMeta;
+        return null;
+      },
+    },
+  };
+  const respAuto = await worker.fetch(new Request("https://psy-telegram.tobirokfor.workers.dev/"), envAuto);
+  assert.ok((await respAuto.text()).includes('<span id="channel-sub">Закрытый канал · 612 участников</span>'));
 });
