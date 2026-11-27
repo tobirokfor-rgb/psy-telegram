@@ -11,17 +11,18 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <style>
     :root {
-      --bg-color: #0b0e14;
-      --card-bg: rgba(22, 27, 34, 0.95);
-      --card-border: rgba(148, 163, 184, 0.22);
+      --bg-color: #0e1621;
+      --card-bg: rgba(23, 33, 43, 0.96);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --bubble-bg: #182533;
       --tg-blue: #229ed9;
-      --tg-blue-light: #2aabee;
-      --tg-pulse: rgba(34, 158, 217, 0.42);
+      --tg-blue-light: #3390ec;
+      --tg-pulse: rgba(51, 144, 236, 0.38);
       --success-green: #16a34a;
-      --text-main: #f8fafc;
-      --text-muted: #cbd5e1;
-      --accent-sky: #38bdf8;
-      --emerald-soft: #6ee7b7;
+      --text-main: #f5f5f5;
+      --text-muted: #7f91a4;
+      --accent-sky: #4da6ff;
+      --emerald-soft: #4ade80;
     }
 
     * {
@@ -37,21 +38,24 @@
     }
 
     body {
-      background: radial-gradient(circle at 50% 30%, #111827 0%, var(--bg-color) 68%);
+      background-color: var(--bg-color);
+      background-image:
+        radial-gradient(circle at 50% 18%, rgba(51, 144, 236, 0.16) 0%, transparent 55%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.035' stroke-width='1.2'%3E%3Cpath d='M16 18l10-4-3 10-3-3-4-3zM46 44l10-4-3 10-3-3-4-3z'/%3E%3Ccircle cx='48' cy='16' r='3'/%3E%3Ccircle cx='14' cy='48' r='2.5'/%3E%3Cpath d='M30 34c2-2 5-2 7 0'/%3E%3C/g%3E%3C/svg%3E");
       color: var(--text-main);
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
       min-height: 100dvh;
-      padding: 20px;
+      padding: 16px;
       overflow: hidden;
       position: relative;
     }
 
     .wrapper {
       width: 100%;
-      max-width: 344px;
+      max-width: 356px;
       position: relative;
       z-index: 10;
     }
@@ -61,12 +65,12 @@
       border: 1px solid var(--card-border);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border-radius: 26px;
-      padding: 32px 24px 26px;
+      border-radius: 22px;
+      padding: 18px 20px 20px;
       width: 100%;
       text-align: center;
-      box-shadow: 0 24px 54px rgba(0, 0, 0, 0.58), 0 0 36px rgba(34, 158, 217, 0.08);
-      animation: fadeIn 0.35s ease-out;
+      box-shadow: 0 24px 54px rgba(0, 0, 0, 0.56), 0 0 32px rgba(51, 144, 236, 0.08);
+      animation: fadeIn 0.32s ease-out;
       transition: opacity 0.28s ease, transform 0.28s ease, filter 0.28s ease;
     }
 
@@ -81,59 +85,121 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    .tg-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .tg-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #dbeafe;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .tg-brand svg {
+      width: 16px;
+      height: 16px;
+      fill: var(--tg-blue-light);
+    }
+
     .tg-orb {
-      width: 68px;
-      height: 68px;
-      border-radius: 999px;
-      margin: 0 auto 16px;
-      background: rgba(34, 158, 217, 0.14);
-      border: 1px solid rgba(56, 189, 248, 0.42);
+      width: 86px;
+      height: 86px;
+      margin: 0 auto 12px;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 36px rgba(34, 158, 217, 0.36);
-      animation: orbPulse 2.6s ease-in-out infinite;
     }
 
-    @keyframes orbPulse {
-      0%, 100% { box-shadow: 0 0 28px rgba(34, 158, 217, 0.3); transform: scale(1); }
-      50% { box-shadow: 0 0 42px rgba(34, 158, 217, 0.52); transform: scale(1.03); }
+    .tg-avatar-wrap {
+      width: 86px;
+      height: 86px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #2aabee 0%, #229ed9 100%);
+      border: 2px solid rgba(51, 144, 236, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 8px 26px rgba(51, 144, 236, 0.32);
     }
 
-    .tg-orb svg {
-      width: 32px;
-      height: 32px;
-      fill: var(--accent-sky);
+    .tg-avatar-wrap svg {
+      width: 38px;
+      height: 38px;
+      fill: #ffffff;
       transform: translateX(-1px);
+    }
+
+    .tg-avatar-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 999px;
+      z-index: 2;
+    }
+
+    .tg-mini-badge {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--tg-blue-light);
+      border: 2.5px solid #17212b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+    }
+
+    .tg-mini-badge svg {
+      width: 12px;
+      height: 12px;
+      fill: #ffffff;
+      transform: translateX(-0.5px);
     }
 
     .badge {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 5px 12px;
+      gap: 6px;
+      padding: 4px 10px;
       border-radius: 999px;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(52, 211, 153, 0.32);
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(74, 222, 128, 0.28);
       color: var(--emerald-soft);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
-      margin-bottom: 14px;
       transition: all 0.2s ease;
     }
 
     .badge.redirecting {
-      background: rgba(56, 189, 248, 0.14);
-      border-color: rgba(56, 189, 248, 0.42);
+      background: rgba(51, 144, 236, 0.18);
+      border-color: rgba(51, 144, 236, 0.48);
       color: #bae6fd;
     }
 
     .badge-dot {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
       border-radius: 999px;
-      background: #34d399;
-      box-shadow: 0 0 8px #34d399;
+      background: #4ade80;
+      box-shadow: 0 0 8px #4ade80;
       animation: blink 1.6s infinite;
       flex-shrink: 0;
     }
@@ -149,54 +215,63 @@
     }
 
     h1 {
-      font-size: 24px;
-      font-weight: 800;
-      line-height: 1.2;
-      letter-spacing: -0.02em;
-      color: #ffffff;
-      margin-bottom: 10px;
+      font-size: 21px;
+      font-weight: 700;
+      line-height: 1.22;
+      letter-spacing: -0.015em;
+      color: var(--text-main);
+      margin-bottom: 4px;
     }
 
-    .desc {
-      font-size: 14.5px;
-      line-height: 1.45;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-      padding: 0 4px;
-    }
-
-    .perks {
-      list-style: none;
-      text-align: left;
-      background: rgba(15, 23, 42, 0.56);
-      border: 1px solid rgba(148, 163, 184, 0.16);
-      border-radius: 14px;
-      padding: 11px 13px;
-      margin-bottom: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-
-    .perks li {
-      font-size: 12.8px;
+    .channel-meta {
+      font-size: 13px;
       line-height: 1.35;
-      color: #e2e8f0;
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
     }
 
-    .perks li span.perk-dot {
+    .tg-pin-bubble {
+      text-align: left;
+      background: var(--bubble-bg);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-left: 3px solid var(--tg-blue-light);
+      border-radius: 14px;
+      padding: 11px 13px 10px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+    }
+
+    .tg-pin-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+
+    .tg-pin-label {
+      font-size: 11.5px;
+      font-weight: 700;
       color: var(--accent-sky);
-      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    .tg-pin-time {
+      font-size: 10.5px;
+      color: rgba(127, 145, 164, 0.8);
       flex-shrink: 0;
+    }
+
+    .tg-pin-text {
+      font-size: 13px;
+      line-height: 1.42;
+      color: #e6edf3;
     }
 
     .buttons-container {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
     }
 
@@ -207,18 +282,18 @@
       justify-content: center;
       gap: 9px;
       width: 100%;
-      padding: 15px 18px;
-      background: linear-gradient(135deg, var(--tg-blue-light) 0%, var(--tg-blue) 100%);
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #3390ec 0%, #229ed9 100%);
       color: #ffffff;
       text-decoration: none;
-      font-size: 16px;
+      font-size: 15.5px;
       font-weight: 700;
-      border-radius: 16px;
-      box-shadow: 0 10px 28px var(--tg-pulse);
+      border-radius: 13px;
+      box-shadow: 0 8px 24px var(--tg-pulse);
       border: none;
       cursor: pointer;
       transition: transform 0.16s ease, box-shadow 0.2s ease, background 0.2s ease;
-      animation: pulseBtn 2.2s infinite ease-in-out;
+      animation: pulseBtn 2.4s infinite ease-in-out;
     }
 
     @keyframes pulseBtn {
@@ -339,11 +414,11 @@
       right: 12px;
       width: min(306px, calc(100vw - 24px));
       z-index: 1000;
-      background: #101928;
-      border: 2px solid var(--accent-sky);
+      background: #17212b;
+      border: 2px solid var(--tg-blue-light);
       border-radius: 18px;
       padding: 15px 15px 14px;
-      box-shadow: 0 18px 46px rgba(14, 165, 233, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      box-shadow: 0 18px 46px rgba(51, 144, 236, 0.38), 0 0 0 1px rgba(255, 255, 255, 0.08);
       animation: spotlightPop 0.28s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
@@ -384,9 +459,9 @@
       right: 16px;
       width: 16px;
       height: 16px;
-      background: #101928;
-      border-left: 2px solid var(--accent-sky);
-      border-top: 2px solid var(--accent-sky);
+      background: #17212b;
+      border-left: 2px solid var(--tg-blue-light);
+      border-top: 2px solid var(--tg-blue-light);
       transform: rotate(45deg);
     }
 
@@ -448,25 +523,42 @@
 
   <div class="wrapper">
     <main class="card">
-      <div class="tg-orb" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M21.9 4.6c.3-1.2-.9-2.2-2-1.7L2.6 10.1c-1.1.5-1 2.1.2 2.5l4.4 1.4 1.7 5.3c.3 1 1.6 1.3 2.3.5l2.5-2.6 4.7 3.4c.9.6 2.1.1 2.4-.9l3.1-15.1zm-4.1 3.3l-7.9 7.1-.3 3.2-1.2-3.8 9.4-6.5z"/>
-        </svg>
+      <div class="tg-topbar">
+        <span class="tg-brand">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21.9 4.6c.3-1.2-.9-2.2-2-1.7L2.6 10.1c-1.1.5-1 2.1.2 2.5l4.4 1.4 1.7 5.3c.3 1 1.6 1.3 2.3.5l2.5-2.6 4.7 3.4c.9.6 2.1.1 2.4-.9l3.1-15.1zm-4.1 3.3l-7.9 7.1-.3 3.2-1.2-3.8 9.4-6.5z"/>
+          </svg>
+          <span>Telegram</span>
+        </span>
+        <div id="status-badge" class="badge">
+          <span class="badge-dot"></span>
+          <span id="badge-text">Доступ открыт</span>
+        </div>
       </div>
 
-      <div id="status-badge" class="badge">
-        <span class="badge-dot"></span>
-        <span id="badge-text">Закрытый канал · Доступ открыт</span>
+      <div id="tg-orb" class="tg-orb" aria-hidden="true">
+        <div id="tg-avatar-wrap" class="tg-avatar-wrap">
+          <svg viewBox="0 0 24 24">
+            <path d="M21.9 4.6c.3-1.2-.9-2.2-2-1.7L2.6 10.1c-1.1.5-1 2.1.2 2.5l4.4 1.4 1.7 5.3c.3 1 1.6 1.3 2.3.5l2.5-2.6 4.7 3.4c.9.6 2.1.1 2.4-.9l3.1-15.1zm-4.1 3.3l-7.9 7.1-.3 3.2-1.2-3.8 9.4-6.5z"/>
+          </svg>
+        </div>
+        <span class="tg-mini-badge">
+          <svg viewBox="0 0 24 24">
+            <path d="M21.9 4.6c.3-1.2-.9-2.2-2-1.7L2.6 10.1c-1.1.5-1 2.1.2 2.5l4.4 1.4 1.7 5.3c.3 1 1.6 1.3 2.3.5l2.5-2.6 4.7 3.4c.9.6 2.1.1 2.4-.9l3.1-15.1zm-4.1 3.3l-7.9 7.1-.3 3.2-1.2-3.8 9.4-6.5z"/>
+          </svg>
+        </span>
       </div>
 
-      <h1>Психология себя и людей</h1>
-      <p class="desc">Закрытые разборы и ответы, которые не пропускает TikTok.</p>
+      <h1 id="channel-title">Психология себя и людей</h1>
+      <p class="channel-meta"><span id="channel-sub">Закрытый Telegram-канал</span></p>
 
-      <ul class="perks">
-        <li><span class="perk-dot">•</span><span>Разборы манипуляций и поведения без цензуры</span></li>
-        <li><span class="perk-dot">•</span><span>Готовые фразы-ответы и шпаргалки в закрепе</span></li>
-        <li><span class="perk-dot">•</span><span>Новые посты выходят в ТГ раньше TikTok</span></li>
-      </ul>
+      <div class="tg-pin-bubble">
+        <div class="tg-pin-head">
+          <span class="tg-pin-label">📌 Закреплённое сообщение</span>
+          <span class="tg-pin-time">только что</span>
+        </div>
+        <p class="tg-pin-text">Разборы манипуляций без цензуры, готовые фразы-ответы и шпаргалки — всё уже в ленте канала.</p>
+      </div>
 
       <div class="buttons-container">
         <a href="https://t.me/+IukZVSEw0io4NGEy" id="action-btn" class="cta-btn">

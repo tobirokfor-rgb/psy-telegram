@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import worker, { resolveTelegramLink, rewriteIndexHtml } from "../src/worker.js";
+import worker, { resolveTelegramLink, rewriteIndexHtml, parseTelegramChannelPreview } from "../src/worker.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const shellHtml = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
@@ -82,7 +82,7 @@ test("rewriteIndexHtml replaces #action-btn href and #tg-config safely", () => {
   });
   assert.ok(outInvalid.includes('"android_intent_mode":"off"'));
   // Original title, noindex meta, 2300ms iOS timeout, and beacons remain intact
-  assert.ok(out.includes("<h1>Психология себя и людей</h1>"));
+  assert.ok(out.includes('<h1 id="channel-title">Психология себя и людей</h1>'));
   assert.ok(out.includes('<meta name="robots" content="noindex, nofollow">'));
   assert.ok(out.includes("const IOS_FALLBACK_DELAY_MS = 2300;"));
   assert.ok(out.includes("/track-tg-app.json"));
@@ -182,4 +182,65 @@ test("Worker handles HEAD / and proxies beacon JSON files straight to ASSETS", a
   );
   assert.equal(beaconResp.status, 200);
   assert.deepEqual(await beaconResp.json(), { status: "ok", event: "copy_link" });
+});
+
+test("parseTelegramChannelPreview and rewriteIndexHtml inject channel title, members, and avatar safely", () => {
+  const tgHtml = `
+    <meta property="og:title" content="Скрытая психология &amp; разборы">
+    <meta property="og:image" content="https://cdn4.telesco.pe/file/avatar123.jpg">
+    <div class="tgme_page_extra">1 243 subscribers</div>
+  `;
+  const parsed = parseTelegramChannelPreview(tgHtml);
+  assert.deepEqual(parsed, {
+    title: "Скрытая психология & разборы",
+    avatarUrl: "https://cdn4.telesco.pe/file/avatar123.jpg",
+    membersText: "1 243 участника",
+  });
+
+  const out = rewriteIndexHtml(shellHtml, {
+    url: "https://t.me/+AbCdEfGh1234",
+    deeplink: "tg://join?invite=AbCdEfGh1234",
+    version: 3,
+    android_intent_mode: "telegram",
+    channelTitle: parsed.title,
+    channelMembers: parsed.membersText,
+    avatarSrc: "/channel-avatar?v=123",
+  });
+  assert.ok(out.includes('<h1 id="channel-title">Скрытая психология &amp; разборы</h1>'));
+  assert.ok(out.includes('<span id="channel-sub">Закрытый канал · 1 243 участника</span>'));
+  assert.ok(out.includes('<img id="channel-avatar" class="tg-avatar-img" src="/channel-avatar?v=123"'));
+});
+
+test("Worker injects cached channel meta from KV and returns 404 on /channel-avatar when empty", async () => {
+  const assets = makeAssetsMock();
+  const env = {
+    ASSETS: assets,
+    DEFAULT_TG_URL: "https://t.me/+IukZVSEw0io4NGEy",
+    LINK_CONFIG_KV: {
+      async get(key) {
+        if (key === "channel_config") {
+          return { url: "https://t.me/psy_public_hub", version: 5, android_intent_mode: "telegram" };
+        }
+        if (key === "channel_meta_cache") {
+          return {
+            url: "https://t.me/psy_public_hub",
+            title: "Тёмная психология",
+            membersText: "612 участников",
+            avatarUrl: "",
+            fetchedAt: Date.now(),
+          };
+        }
+        return null;
+      },
+    },
+  };
+
+  const resp = await worker.fetch(new Request("https://psy-telegram.tobirokfor.workers.dev/"), env);
+  assert.equal(resp.status, 200);
+  const html = await resp.text();
+  assert.ok(html.includes('<h1 id="channel-title">Тёмная психология</h1>'));
+  assert.ok(html.includes('<span id="channel-sub">Закрытый канал · 612 участников</span>'));
+
+  const avatarResp = await worker.fetch(new Request("https://psy-telegram.tobirokfor.workers.dev/channel-avatar"), env);
+  assert.equal(avatarResp.status, 404);
 });
