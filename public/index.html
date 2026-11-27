@@ -161,8 +161,36 @@
       font-size: 14.5px;
       line-height: 1.45;
       color: var(--text-muted);
-      margin-bottom: 24px;
+      margin-bottom: 16px;
       padding: 0 4px;
+    }
+
+    .perks {
+      list-style: none;
+      text-align: left;
+      background: rgba(15, 23, 42, 0.56);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 14px;
+      padding: 11px 13px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .perks li {
+      font-size: 12.8px;
+      line-height: 1.35;
+      color: #e2e8f0;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .perks li span.perk-dot {
+      color: var(--accent-sky);
+      font-weight: 800;
+      flex-shrink: 0;
     }
 
     .buttons-container {
@@ -216,20 +244,24 @@
     }
 
     .copy-btn {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       width: 100%;
-      padding: 11px 14px;
-      background: rgba(30, 41, 59, 0.72);
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      color: var(--text-muted);
-      font-size: 13px;
+      padding: 7px 10px;
+      background: transparent;
+      border: none;
+      color: rgba(203, 213, 225, 0.68);
+      font-size: 12px;
       font-weight: 500;
-      border-radius: 12px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: color 0.2s ease, background 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      color: var(--text-muted);
     }
 
     .copy-btn:active {
@@ -237,8 +269,7 @@
     }
 
     .copy-btn.copied {
-      background: rgba(22, 163, 74, 0.2);
-      border-color: rgba(74, 222, 128, 0.55);
+      background: rgba(22, 163, 74, 0.16);
       color: var(--emerald-soft);
     }
 
@@ -425,23 +456,29 @@
 
       <div id="status-badge" class="badge">
         <span class="badge-dot"></span>
-        <span id="badge-text">Закрытый доступ</span>
+        <span id="badge-text">Закрытый канал · Доступ открыт</span>
       </div>
 
       <h1>Психология себя и людей</h1>
-      <p class="desc">Закрытые разборы, которые не пропускает TikTok.</p>
+      <p class="desc">Закрытые разборы и ответы, которые не пропускает TikTok.</p>
+
+      <ul class="perks">
+        <li><span class="perk-dot">•</span><span>Разборы манипуляций и поведения без цензуры</span></li>
+        <li><span class="perk-dot">•</span><span>Готовые фразы-ответы и шпаргалки в закрепе</span></li>
+        <li><span class="perk-dot">•</span><span>Новые посты выходят в ТГ раньше TikTok</span></li>
+      </ul>
 
       <div class="buttons-container">
         <a href="https://t.me/+IukZVSEw0io4NGEy" id="action-btn" class="cta-btn">
           <svg id="btn-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M21.9 4.6c.3-1.2-.9-2.2-2-1.7L2.6 10.1c-1.1.5-1 2.1.2 2.5l4.4 1.4 1.7 5.3c.3 1 1.6 1.3 2.3.5l2.5-2.6 4.7 3.4c.9.6 2.1.1 2.4-.9l3.1-15.1zm-4.1 3.3l-7.9 7.1-.3 3.2-1.2-3.8 9.4-6.5z"/>
           </svg>
-          <span id="btn-text">Открыть в Telegram</span>
+          <span id="btn-text">Перейти в Telegram</span>
         </a>
 
         <button id="copy-btn" class="copy-btn" type="button">
           <span id="copy-icon">📋</span>
-          <span id="copy-text">Скопировать ссылку</span>
+          <span id="copy-text">Не открывается? Скопировать ссылку</span>
         </button>
 
         <div id="manual-copy-box" class="manual-copy-box">
@@ -456,18 +493,18 @@
   <div id="spotlight-popover" class="spotlight-popover" role="dialog" aria-live="polite" aria-label="Как открыть канал в браузере">
     <div class="spotlight-caret" aria-hidden="true"></div>
     <button type="button" id="sp-close-btn" class="sp-close" aria-label="Закрыть подсказку">✕</button>
-    <div class="sp-title">TikTok блокирует прямой вход 🔒</div>
+    <div class="sp-title">Почти готово: открой в браузере ↗</div>
     <div class="sp-step sp-step-active">
-      <span>1. Нажми <strong>•••</strong> вот тут</span>
+      <span>1. Нажми <strong>•••</strong> в правом верхнем углу</span>
       <span class="sp-arrow">↗</span>
     </div>
     <div id="sp-step-2" class="sp-step">
       2. Выбери <strong>«Открыть в браузере»</strong>
     </div>
-    <div class="sp-footer">⚡ Канал откроется сам (за 1 сек)</div>
+    <div class="sp-footer">⚡ Канал откроется сам за 1 сек</div>
   </div>
 
-  <script id="tg-config" type="application/json">{"url":"https://t.me/+IukZVSEw0io4NGEy","deeplink":"tg://join?invite=IukZVSEw0io4NGEy","version":1,"android_intent_mode":"off"}</script>
+  <script id="tg-config" type="application/json">{"url":"https://t.me/+IukZVSEw0io4NGEy","deeplink":"tg://join?invite=IukZVSEw0io4NGEy","version":1,"android_intent_mode":"telegram"}</script>
   <script>
     (function() {
       const DEFAULT_TG_URL = "https://t.me/+IukZVSEw0io4NGEy";
@@ -497,22 +534,18 @@
       const APP_STORAGE_KEY = "tg_app_handoff_ts_v" + CONFIG_VERSION;
       const WEB_STORAGE_KEY = "tg_web_handoff_ts_v" + CONFIG_VERSION;
       const UX_REDIRECT_KEY = "tg_ux_redirect_ts_v" + CONFIG_VERSION;
-      const HANDOFF_TTL_MS = 3 * 24 * 60 * 60 * 1000;
+      const HANDOFF_TTL_MS = 24 * 60 * 60 * 1000;
       const UX_REDIRECT_COOLDOWN_MS = 60 * 1000;
       const AUTO_REDIRECT_DELAY_MS = 100;
-      const IOS_FALLBACK_DELAY_MS = 5000;
+      const IOS_FALLBACK_DELAY_MS = 2300;
       const ANDROID_FALLBACK_DELAY_MS = 2200;
-      const GENERIC_IOS_WEBVIEW_SPOTLIGHT_MS = 2500;
       const ANDROID_INTENT_FALLBACK_MS = 900;
-      const TIKTOK_SPOTLIGHT_AUTO_SHOW_MS = 380;
 
       const ua = navigator.userAgent || "";
       const isTikTok = /musical_ly|trill|BytedanceWebview|TikTok|ByteLocale/i.test(ua);
       const isBot = /bot|crawl|spider|slurp|facebookexternalhit|facebot|telegrambot|twitterbot|whatsapp|pinterest|peek|preview|google-read-aloud|googleother|oai-searchbot|chatgpt-user|yandex|bytespider|headless|ttauto/i.test(ua);
       const isIOS = /iPhone|iPad|iPod/i.test(ua);
       const isAndroid = /Android/i.test(ua);
-      const isGenericIOSWebView =
-        isIOS && !isTikTok && !/Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|YaBrowser|OPiOS/i.test(ua);
 
       const statusBadge = document.getElementById("status-badge");
       const badgeText = document.getElementById("badge-text");
@@ -770,12 +803,16 @@
       });
 
       window.addEventListener("beforeunload", function() {
-        isUnloading = true;
-        handoffActive = false;
-        clearPendingFallback();
+        if (!handoffActive) {
+          isUnloading = true;
+          clearPendingFallback();
+        }
       });
 
       window.addEventListener("pagehide", function(e) {
+        if (handoffActive && pageWasVisible) {
+          confirmNativeAppHandoff("pagehide");
+        }
         if (!e || !e.persisted) {
           isUnloading = true;
           handoffActive = false;
@@ -803,24 +840,9 @@
         activeTrigger = triggerSource || "external_browser";
 
         if (isIOS || isAndroid) {
-          // Маячок срабатывает только при фактическом уходе браузера в приложение (visibilitychange -> hidden)
-          // либо ровно перед web-fallback / Spotlight (для скрытого iOS WKWebView).
+          // Маячок срабатывает только при фактическом уходе браузера в приложение (visibilitychange/pagehide)
           handoffActive = true;
           window.location.href = TG_DEEPLINK;
-
-          if (isGenericIOSWebView) {
-            fallbackTimer = setTimeout(function() {
-              fallbackTimer = null;
-              if (!handoffActive) return;
-              if (document.visibilityState === "hidden" && !isUnloading && pageWasVisible) {
-                confirmNativeAppHandoff("visibility_hidden_timer");
-                return;
-              }
-              handoffActive = false;
-              openSpotlight();
-            }, GENERIC_IOS_WEBVIEW_SPOTLIGHT_MS);
-            return;
-          }
 
           const delayMs = isIOS ? IOS_FALLBACK_DELAY_MS : ANDROID_FALLBACK_DELAY_MS;
           fallbackTimer = setTimeout(function() {
@@ -844,17 +866,9 @@
         }
       }
 
-      // Состояние 2: внутри TikTok WebView
+      // Состояние 2: внутри TikTok WebView (Spotlight только после осознанного клика)
       if (isTikTok) {
         updateSpotlightBrowserHint();
-
-        if (!(isAndroid && ANDROID_INTENT_MODE !== "off")) {
-          whenPageVisible(function() {
-            setTimeout(function() {
-              openSpotlight();
-            }, TIKTOK_SPOTLIGHT_AUTO_SHOW_MS);
-          });
-        }
 
         actionBtn.addEventListener("click", function(e) {
           e.preventDefault();
@@ -945,7 +959,7 @@
             copyResetTimer = setTimeout(function() {
               copyBtn.classList.remove("copied");
               copyIcon.textContent = "📋";
-              copyText.textContent = "Скопировать ссылку";
+              copyText.textContent = "Не открывается? Скопировать ссылку";
             }, 3000);
           },
           function() {

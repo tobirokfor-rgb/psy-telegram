@@ -81,10 +81,10 @@ test("rewriteIndexHtml replaces #action-btn href and #tg-config safely", () => {
     android_intent_mode: "bogus",
   });
   assert.ok(outInvalid.includes('"android_intent_mode":"off"'));
-  // Original title, noindex meta, 5000ms iOS timeout, and beacons remain intact
+  // Original title, noindex meta, 2300ms iOS timeout, and beacons remain intact
   assert.ok(out.includes("<h1>Психология себя и людей</h1>"));
   assert.ok(out.includes('<meta name="robots" content="noindex, nofollow">'));
-  assert.ok(out.includes("const IOS_FALLBACK_DELAY_MS = 5000;"));
+  assert.ok(out.includes("const IOS_FALLBACK_DELAY_MS = 2300;"));
   assert.ok(out.includes("/track-tg-app.json"));
 });
 
